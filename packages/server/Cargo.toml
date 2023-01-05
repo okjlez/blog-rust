@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 ureq = { version = "*", features = ["json", "charset"] }
+rocket = { version = "0.5.0-rc.2", features = ["secrets"] }
 
 
