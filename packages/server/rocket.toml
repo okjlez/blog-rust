@@ -22,6 +22,3 @@ ctrlc = true
 signals = ["term", "hup"]
 grace = 5
 mercy = 5
-
-[global.limits]
-msgpack = 5242880

@@ -3,11 +3,11 @@ use std::{time::{self}, collections::HashMap, env};
 
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
-use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize};
+use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
 use tokio_postgres::NoTls;
 use std::time::UNIX_EPOCH;
 
-mod account;
+mod models;
 mod session;
 mod error;
 
@@ -19,13 +19,6 @@ mod error;
 //api/thread/remove POST
 //api/thread/update POST
 //api/thread/retrieve POST 
-
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
-struct Blog {
-    app_key: String,
-}
-
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> { 
@@ -100,7 +93,7 @@ async fn main() -> Result<(), rocket::Error> {
 */
 
     let _rocket = rocket::build()
-        .mount("/api", account::posts::routes()).manage(client_object)
+        .mount("/api", routes![]).manage(client_object)
             .ignite().await?
             .launch().await?;
 
