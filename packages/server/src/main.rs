@@ -1,8 +1,9 @@
-use std::{time::{self}, collections::HashMap};
+use std::{time::{self}, collections::HashMap, env};
 
 
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
+use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize};
 use tokio_postgres::NoTls;
 use std::time::UNIX_EPOCH;
 
@@ -17,20 +18,40 @@ mod error;
 //api/thread/new POST 
 //api/thread/remove POST
 //api/thread/update POST
-//api/thread/retrieve POST vc
+//api/thread/retrieve POST 
+
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
+struct Blog {
+    app_key: String,
+}
 
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> { 
 
     // Postgres Database
-    let mut cfg = Config::new();
-    cfg.dbname = Some("blog-rust".to_string());
-    cfg.user = Some("postgres".to_string());
-    cfg.password = Some("Mladenvranjes1!".to_string());
-    cfg.port = Some(5432);
-    cfg.manager = Some(ManagerConfig { recycling_method: RecyclingMethod::Fast });
-    let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
+    let pg_dbname = Some(
+    dotenv::var("PG_DBNAME")
+    .expect("PG_DBNAME NOT SET"));
+    let pg_user = Some(
+    dotenv::var("PG_USER")
+    .expect("PG_USER NOT SET"));
+    let pg_pass = Some(
+    dotenv::var("PG_PASS")
+    .expect("PG_PASS NOT SET"));
+    let pg_port: Option<u16> = Some(
+    dotenv::var("PG_PORT")
+    .expect("PG_PORT NOT SET")
+    .parse().unwrap());
+    let mut pg_cfg = Config::new();
+    pg_cfg.dbname = pg_dbname;
+    pg_cfg.user = pg_user;
+    pg_cfg.password = pg_pass;
+    pg_cfg.port = pg_port;
+    pg_cfg.manager = Some(ManagerConfig { recycling_method: RecyclingMethod::Fast });
+
+    let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let client_object = pool.get().await.unwrap();
 
     
