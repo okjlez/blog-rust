@@ -1,15 +1,11 @@
-use std::default;
 use std::time::{self, UNIX_EPOCH};
-
-use diesel::{expression::AsExpression, FromSqlRow};
-use diesel::sql_types::*;
+use postgres_types::{ToSql, FromSql};
 use rocket::serde::{Serialize, Deserialize};
 
-
 #[derive(
+    Clone,
     Serialize, 
     Deserialize, 
-    Clone
 )]
 #[serde(crate = "rocket::serde")]
 struct Account {
@@ -22,13 +18,33 @@ struct Account {
     rank: Rank
 }
 
+#[derive(
+    Default,
+    Debug,
+    Clone,
+    PartialEq, 
+    Serialize, 
+    Deserialize, 
+    ToSql,
+    FromSql
+)]
+#[serde(crate = "rocket::serde")]
+enum Rank {
+    #[default]
+    None,
+    Member,
+    Moderator,
+    Admin,
+    Owner
+}
+
 impl Default for Account {
     fn default() -> Self {
-        let a = time::SystemTime::now();
-        let b = a.duration_since(UNIX_EPOCH);
-        let c = b.unwrap().as_nanos();
+        let id_a = time::SystemTime::now();
+        let id_b = id_a.duration_since(UNIX_EPOCH);
+        let id_c = id_b.unwrap().as_nanos();
         Account { 
-            id: c.to_string(),
+            id: id_c.to_string(),
             username: None, 
             password: None, 
             email: None, 
@@ -37,28 +53,7 @@ impl Default for Account {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    PartialEq, 
-    Serialize, 
-    Deserialize, 
-    AsExpression, 
-    FromSqlRow,
-    Default
-)]
-#[sql_type = "SmallInt"]
-#[serde(crate = "rocket::serde")]
-enum Rank {
-    /// Will be represented as  0
-    #[default]
-    None,
-    /// Will be represented as  1
-    Member,
-    /// Will be represented as  2
-    Moderator,
-    /// Will be represented as  3
-    Admin,
-    /// Will be represented as  4
-    Owner
+impl Account {
+    //create
+    //new
 }
