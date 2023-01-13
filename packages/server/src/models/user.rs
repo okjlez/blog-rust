@@ -1,3 +1,7 @@
+/// The Account module is utilized to manage the creation and authentication 
+/// of user accounts for the blog platform. The Id and Rank fields are 
+/// automatically assigned upon successful account creation. The required information from the user to create an account is their Username, Password, and Email."
+
 use std::{time::{self, UNIX_EPOCH}, borrow::Cow};
 use postgres_types::{ToSql, FromSql};
 use rocket::serde::{Serialize, Deserialize};
