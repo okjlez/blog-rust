@@ -3,6 +3,7 @@ use std::{time::{self}, collections::HashMap, env};
 
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
+use models::user::Account;
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
 use tokio_postgres::NoTls;
 use std::time::UNIX_EPOCH;
@@ -47,7 +48,6 @@ async fn main() -> Result<(), rocket::Error> {
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let client_object = pool.get().await.unwrap();
 
-    
     /* 
     let test = 
     AccountManager::new(client, 
