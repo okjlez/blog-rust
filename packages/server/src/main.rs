@@ -52,7 +52,6 @@ async fn main() -> Result<(), rocket::Error> {
 
     let acc = Account::new("zel", "1234", "zeli@gmail.com");
 
-    acc.m(&client_object).update().await.unwrap();
 
     /*      
     let yes = Postgres::new();

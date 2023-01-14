@@ -8,13 +8,14 @@ use rocket::serde::{Serialize, Deserialize};
 
 use crate::traits::query::QueryCrud;
 
+/// Represents the config of an individual
+/// allows flexibility among the codebase.
 pub struct AccountConfig<'a> {
     query: &'a Object,
     acc: Account
 }
+
 /// Represents an individual's account.
-/// 
-/// ['Account'] is built to be reused multiple times
 #[derive(
     Debug,
     Clone,
@@ -32,6 +33,8 @@ pub struct Account {
     rank: Rank
 }
 
+/// The enum Rank shows all the
+/// available ranks.
 #[derive(
     Default,
     Debug,
@@ -52,7 +55,9 @@ pub enum Rank {
     Owner
 }
 
-pub enum Field {
+/// The enum FIELD shows all the fields
+/// Account type has.
+pub enum AccountField {
     Id,
     Username,
     Password,
@@ -124,33 +129,64 @@ impl Account {
         return AccountConfig { query: pg_obj, acc: self }
     }
 
+    /// If you would rather use the builder pattern.
     pub fn builder() -> AccountBuilder {
         AccountBuilder::default()
     }
 
+    /// Returns the id of the account.
     pub fn id(self) -> String {
         self.id
     }
 
+    /// Returns the username of the account.
     pub fn username(self) -> String {
         self.username.unwrap()
     }
     
+    /// Returns the password of the account.
     pub fn password(self) -> String {
         self.password.unwrap()
     }
 
+    /// Returns the email of the account.
     pub fn email(self) -> String {
         self.email.unwrap()
     }
     
+    /// Returns the rank of the account.
     pub fn rank(self) -> Rank {
         self.rank
     }
 }
 
+impl AccountConfig<'_> {
+    /// Check if the indicated value already exists.
+    ///
+    /// # Arguments
+    ///
+    /// * `check_for` - the field to check for.
+    /// * `value` - the value to check for.
+    ///
+    /// # Examples
+    /// 
+    /// ```
+    ///
+    /// START HERE
+    /// ```
+    pub fn exists<'c, V>(
+        &self,
+        check_for: AccountField,
+        value: V
+    ) -> Result<(), crate::error::Error>
+    where V: Into<Cow<'c, str>> + Into<Rank> {
+        todo!()
+    }
+}
+
 #[async_trait]
 impl QueryCrud for AccountConfig<'_> {
+    
     async fn create(&self) -> Result<(), crate::error::Error> {
         todo!()
     }
