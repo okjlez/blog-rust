@@ -6,9 +6,11 @@ use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 use models::user::Account;
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
 use tokio_postgres::NoTls;
+use traits::query::QueryCrud;
 use std::time::UNIX_EPOCH;
 
 mod models;
+mod traits;
 mod session;
 mod error;
 
@@ -48,7 +50,13 @@ async fn main() -> Result<(), rocket::Error> {
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let client_object = pool.get().await.unwrap();
 
-    /* 
+    let acc = Account::new("zel", "1234", "zeli@gmail.com");
+
+    acc.m(&client_object).update().await.unwrap();
+
+    /*      
+    let yes = Postgres::new();
+
     let test = 
     AccountManager::new(client, 
         Account::new( "3".to_string(),

@@ -3,11 +3,14 @@ use core::fmt;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Error {
+    //models//user.rs 
     AccountNotFound(String),
-    SessionNotFound,
     AccountExists(String),
     UsernameTaken(String),
     EmailTaken(String),
+    //models//sesison.rs
+    SessionNotFound,
+
 }
 
 impl fmt::Display for Error {

@@ -1,11 +1,20 @@
-/// The Account module is utilized to manage the creation and authentication 
-/// of user accounts for the blog platform. The Id and Rank fields are 
-/// automatically assigned upon successful account creation. The required information from the user to create an account is their Username, Password, and Email."
+/// A simple, yet effective account system.
 
 use std::{time::{self, UNIX_EPOCH}, borrow::Cow};
+use async_trait::async_trait;
+use deadpool_postgres::Object;
 use postgres_types::{ToSql, FromSql};
 use rocket::serde::{Serialize, Deserialize};
 
+use crate::traits::query::QueryCrud;
+
+pub struct AccountConfig<'a> {
+    query: &'a Object,
+    acc: Account
+}
+/// Represents an individual's account.
+/// 
+/// ['Account'] is built to be reused multiple times
 #[derive(
     Debug,
     Clone,
@@ -16,7 +25,7 @@ use rocket::serde::{Serialize, Deserialize};
 pub struct Account {
     #[ignore]
     id: String,
-    pub username: Option<String>,
+    username: Option<String>,
     password: Option<String>,
     email: Option<String>,
     #[ignore]
@@ -41,6 +50,14 @@ pub enum Rank {
     Moderator,
     Admin,
     Owner
+}
+
+pub enum Field {
+    Id,
+    Username,
+    Password,
+    Email,
+    Rank
 }
 
 impl Default for Account {
@@ -73,11 +90,11 @@ impl Account {
     ///
     /// // Import our ['Account'] struct.
     /// use models::user::Account;
+    /// use models::user::AccountBuilder;
     /// // instantiate the account object.
     /// let account = Account::new("CrazyJohn", "qwerty", "john@gmail.com");
     /// // Prints out the id of the account.
     /// println!("{}", account.id)
-    /// 
     /// // if you prefer the builder design, you can do this.
     /// let account_builder = Account::builder()
     ///    .set_username("email")
@@ -97,6 +114,14 @@ impl Account {
         acc.password = Some(password.into().to_string());
         acc.email = Some(email.into().to_string());
         acc
+    }
+    
+    /// An modifier function that grants you the ability
+    /// to create/read/update/delete account values of an indivi-
+    /// ual account inside the database. Hence the name m-
+    /// (modifier).
+    pub fn m(self, pg_obj: &Object) -> AccountConfig {
+        return AccountConfig { query: pg_obj, acc: self }
     }
 
     pub fn builder() -> AccountBuilder {
@@ -121,6 +146,25 @@ impl Account {
     
     pub fn rank(self) -> Rank {
         self.rank
+    }
+}
+
+#[async_trait]
+impl QueryCrud for AccountConfig<'_> {
+    async fn create(&self) -> Result<(), crate::error::Error> {
+        todo!()
+    }
+
+    async fn read(&self) -> Result<(), crate::error::Error> {
+        todo!()
+    }
+
+    async fn update(&self) -> Result<(), crate::error::Error> {
+        todo!()
+    }
+
+    async fn delete(&self) -> Result<(), crate::error::Error> {
+        todo!()
     }
 }
 
