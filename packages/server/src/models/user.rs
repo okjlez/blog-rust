@@ -1,19 +1,14 @@
+use core::fmt;
 /// A simple, yet effective account system.
 
-use std::{time::{self, UNIX_EPOCH}, borrow::Cow};
+use std::{time::{self, UNIX_EPOCH}, borrow::{Cow, Borrow}};
 use async_trait::async_trait;
 use deadpool_postgres::Object;
 use postgres_types::{ToSql, FromSql};
 use rocket::serde::{Serialize, Deserialize};
 
-use crate::traits::query::QueryCrud;
+use crate::{traits::query::QueryCrud, error::Error};
 
-/// Represents the config of an individual
-/// allows flexibility among the codebase.
-pub struct AccountConfig<'a> {
-    query: &'a Object,
-    acc: Account
-}
 
 /// Represents an individual's account.
 #[derive(
@@ -53,16 +48,6 @@ pub enum Rank {
     Moderator,
     Admin,
     Owner
-}
-
-/// The enum FIELD shows all the fields
-/// Account type has.
-pub enum AccountField {
-    Id,
-    Username,
-    Password,
-    Email,
-    Rank
 }
 
 impl Default for Account {
@@ -160,50 +145,6 @@ impl Account {
     }
 }
 
-impl AccountConfig<'_> {
-    /// Check if the indicated value already exists.
-    ///
-    /// # Arguments
-    ///
-    /// * `check_for` - the field to check for.
-    /// * `value` - the value to check for.
-    ///
-    /// # Examples
-    /// 
-    /// ```
-    ///
-    /// START HERE
-    /// ```
-    pub fn exists<'c, V>(
-        &self,
-        check_for: AccountField,
-        value: V
-    ) -> Result<(), crate::error::Error>
-    where V: Into<Cow<'c, str>> + Into<Rank> {
-        todo!()
-    }
-}
-
-#[async_trait]
-impl QueryCrud for AccountConfig<'_> {
-    
-    async fn create(&self) -> Result<(), crate::error::Error> {
-        todo!()
-    }
-
-    async fn read(&self) -> Result<(), crate::error::Error> {
-        todo!()
-    }
-
-    async fn update(&self) -> Result<(), crate::error::Error> {
-        todo!()
-    }
-
-    async fn delete(&self) -> Result<(), crate::error::Error> {
-        todo!()
-    }
-}
-
 #[derive(Default)]
 pub struct AccountBuilder {
     account: Account
@@ -230,3 +171,123 @@ impl AccountBuilder {
         self.account
     }
 }
+
+/// Represents the config of an individual
+/// allows flexibility among the codebase.
+pub struct AccountConfig<'a> {
+    query: &'a Object,
+    acc: Account
+}
+
+/// The enum FIELD shows all the fields
+/// Account type has.
+#[derive(Debug, PartialEq)]
+pub enum AccountField {
+    Id,
+    Username,
+    Password,
+    Email,
+    Rank
+}
+
+impl AccountField {
+    fn obtain(&self, acc: Account) -> Option<String> {
+        match self {
+            AccountField::Id => return Some(acc.id),
+            AccountField::Username => return acc.username,
+            AccountField::Password => return acc.password,
+            AccountField::Email => return acc.email,
+            AccountField::Rank => return None,
+        }
+    }
+}
+
+impl fmt::Display for AccountField {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+} 
+
+impl AccountConfig<'_> {
+    /// Check if the indicated value already exists.
+    ///
+    /// # Arguments
+    /// * &self - the AccountConfig type.
+    /// * `check_for` - the field to check for.
+    /// * `value` - the value to check for.
+    ///
+    /// # Examples
+    /// 
+    /// ```
+    ///
+    /// START HERE
+    /// ```
+    pub async fn exists(
+        &self,
+        check_for: AccountField
+    ) -> Result<bool, Error> {
+        let qry = self.query;
+        let f = check_for.to_string();
+        let v = AccountField::obtain(&check_for, self.acc.to_owned()).unwrap();
+        let a = format!("SELECT {} from accounts 
+        WHERE {} = $1", f, f);
+        let b = qry
+            .prepare(&a)
+            .await.unwrap();
+        let c = qry
+            .query(&b, &[&v])
+            .await.unwrap();
+        if !c.is_empty() {
+            return Ok(true);
+        } else {
+            return Err(Error::AccountNotFound(v))
+        }
+    }
+}
+
+#[async_trait]
+impl QueryCrud for AccountConfig<'_, > {
+    
+    async fn create(&self) -> Result<(), Error> {
+        let acc = &self.acc;
+        let qry = self.query;
+        let a = "
+        INSERT INTO accounts (
+            id,
+            username,
+            email,
+            password,
+            rank
+        ) VAlUES (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5
+        )";
+        let b = qry
+            .prepare(&a)
+            .await.unwrap();
+        qry
+            .query(&b, 
+                &[&acc.id, &acc.username.clone().unwrap(), 
+                &acc.email.clone().unwrap(), 
+                &acc.password.clone().unwrap(), 
+                &acc.rank])
+            .await.unwrap();
+        Ok(())
+    }
+
+    async fn read(&self) -> Result<(), Error> {
+        todo!()
+    }
+
+    async fn update(&self) -> Result<(), Error> {
+        todo!()
+    }
+
+    async fn delete(&self) -> Result<(), Error> {
+        todo!()
+    }
+}
+

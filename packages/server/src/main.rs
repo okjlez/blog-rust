@@ -3,7 +3,7 @@ use std::{time::{self}, collections::HashMap, env};
 
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
-use models::user::Account;
+use models::user::{Account, AccountField};
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
 use tokio_postgres::NoTls;
 use traits::query::QueryCrud;
@@ -51,7 +51,8 @@ async fn main() -> Result<(), rocket::Error> {
     let client_object = pool.get().await.unwrap();
 
     let acc = Account::new("zel", "1234", "zeli@gmail.com");
-
+    let acc_m = acc.m(&client_object);
+   // acc_m.exists(AccountField::Email).await.unwrap();
 
     /*      
     let yes = Postgres::new();
