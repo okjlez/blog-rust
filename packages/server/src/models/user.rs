@@ -4,6 +4,7 @@ use core::fmt;
 use std::{time::{self, UNIX_EPOCH}, borrow::{Cow, Borrow}};
 use async_trait::async_trait;
 use deadpool_postgres::Object;
+use nanoid::format;
 use postgres_types::{ToSql, FromSql};
 use rocket::serde::{Serialize, Deserialize};
 
@@ -209,49 +210,31 @@ impl fmt::Display for AccountField {
 } 
 
 impl AccountConfig<'_> {
-    /// Check if the indicated value already exists.
-    ///
-    /// # Arguments
-    /// * `&self` - the AccountConfig type.
-    /// * `check_for` - the field to check for.
-    ///
-    /// # Examples
-    /// 
-    /// ```
-    /// 
-    /// let acc = Account::new("johndoe", "1234", "johndoe@gmail.com");
-    /// let acc_m = acc.m(&client_object);
-    /// let exists = acc_m.exists(AccountField::Email).await.unwrap();
-    /// // This will return false because johndoe does not exist.
-    /// println!("{}", exists)
-    /// 
-    /// acc_m.create();
-    /// let exists = acc_m.exists(AccountField::Email).await.unwrap();
-    /// // This will return true because the account will be there.
-    /// println!("{}", exists)
-    /// ```
     pub async fn exists(
         &self,
-        check_for: AccountField
+        check_for: AccountField //cf
     ) -> bool {
-        let qry = self.query;
-        let f = check_for.to_string();
-        let v = AccountField::obtain(&check_for, self.acc.to_owned()).unwrap();
-        let a = format!("SELECT {} from accounts 
-        WHERE {} = $1", f, f);
-        let b = qry
-            .prepare(&a)
-            .await.unwrap();
-        let c = qry
-            .query(&b, &[&v])
-            .await.unwrap();
-        return !c.is_empty()
+        let query = self.query;
+        let cfe = check_for.to_string();
+        let cfv = AccountField::obtain(
+            &check_for, 
+            self.acc.to_owned()).unwrap();
+        let a = format!("
+            SELECT {} FROM accounts WHERE {} = $1", cfe, cfe 
+        );
+        let b = query.
+            prepare(&a).await.unwrap();
+        let c = query.
+            query(&b, &[&cfv]).await.unwrap();
+        return !c.is_empty();
     }
+
 }
 
 #[async_trait]
 impl QueryCrud for AccountConfig<'_, > {
     async fn create(&self) -> Result<(), Error> {
+
         /*
         let acc = &self.acc;
         let qry = self.query;
