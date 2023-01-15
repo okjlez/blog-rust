@@ -50,8 +50,9 @@ async fn main() -> Result<(), rocket::Error> {
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let client_object = pool.get().await.unwrap();
 
-    let acc = Account::new("johndoe", "1234", "johndoe@gmail.com");
+    let acc = Account::new("johndoed", "1234", "johndoe@gmail.com");
     let acc_m = acc.m(&client_object);
+    acc_m.create().await.unwrap();
    // acc_m.exists(AccountField::Email).await.unwrap();
 
     /*      

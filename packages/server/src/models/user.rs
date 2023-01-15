@@ -29,7 +29,7 @@ impl AccountConfig<'_> {
         &self,
         check_for: AccountField //cf
     ) -> bool {
-        let query = self.query;
+        let q = self.query;
         let cfe = check_for.to_string();
         let cfv = AccountField::obtain(
             &check_for, 
@@ -37,13 +37,66 @@ impl AccountConfig<'_> {
         let a = format!("
             SELECT {} FROM accounts WHERE {} = $1", cfe, cfe 
         );
-        let b = query.
+        let b = q.
             prepare(&a).await.unwrap();
-        let c = query.
+        let c = q.
             query(&b, &[&cfv]).await.unwrap();
         return !c.is_empty();
     }
+}
 
+#[async_trait]
+impl QueryCrud for AccountConfig<'_, > {
+    async fn create(&self) -> Result<(), Error> {
+        let acc = self.acc.to_owned();
+        let cf_username = self
+            .exists(AccountField::Username).await;
+        let cf_email = self
+            .exists(AccountField::Email).await;
+        if cf_username { 
+            return Err(Error::UsernameTaken(acc.username()))
+        }
+        if cf_email { 
+            return Err(Error::EmailTaken(acc.email()))
+        }
+        let q = self.query;
+        let a = "
+        INSERT INTO accounts (
+            id,
+            username,
+            email,
+            password,
+            rank
+        ) VAlUES (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5
+        )";
+        let b = q
+            .prepare(&a)
+            .await.unwrap();
+        q.query(&b, 
+                &[&acc.id, &acc.username.clone().unwrap(), 
+                &acc.email.clone().unwrap(), 
+                &acc.password.clone().unwrap(), 
+                &acc.rank])
+            .await.unwrap();
+         Ok(())
+    }
+
+    async fn read(&self) -> Result<(), Error> {
+        todo!()
+    }
+
+    async fn update(&self) -> Result<(), Error> {
+        todo!()
+    }
+
+    async fn delete(&self) -> Result<(), Error> {
+        todo!()
+    }
 }
 
 impl AccountField {
@@ -70,54 +123,6 @@ impl fmt::Display for AccountField {
     }
 } 
 
-#[async_trait]
-impl QueryCrud for AccountConfig<'_, > {
-    async fn create(&self) -> Result<(), Error> {
-
-        /*
-        let acc = &self.acc;
-        let qry = self.query;
-        let a = "
-        INSERT INTO accounts (
-            id,
-            username,
-            email,
-            password,
-            rank
-        ) VAlUES (
-            $1,
-            $2,
-            $3,
-            $4,
-            $5
-        )";
-        let b = qry
-            .prepare(&a)
-            .await.unwrap();
-        qry
-            .query(&b, 
-                &[&acc.id, &acc.username.clone().unwrap(), 
-                &acc.email.clone().unwrap(), 
-                &acc.password.clone().unwrap(), 
-                &acc.rank])
-            .await.unwrap();
-        Ok(())
-        */
-        todo!()
-    }
-
-    async fn read(&self) -> Result<(), Error> {
-        todo!()
-    }
-
-    async fn update(&self) -> Result<(), Error> {
-        todo!()
-    }
-
-    async fn delete(&self) -> Result<(), Error> {
-        todo!()
-    }
-}
 
 
 
