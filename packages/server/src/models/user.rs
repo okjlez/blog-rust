@@ -212,15 +212,23 @@ impl AccountConfig<'_> {
     /// Check if the indicated value already exists.
     ///
     /// # Arguments
-    /// * &self - the AccountConfig type.
+    /// * `&self` - the AccountConfig type.
     /// * `check_for` - the field to check for.
-    /// * `value` - the value to check for.
     ///
     /// # Examples
     /// 
     /// ```
-    ///
-    /// START HERE
+    /// 
+    /// let acc = Account::new("johndoe", "1234", "johndoe@gmail.com");
+    /// let acc_m = acc.m(&client_object);
+    /// let exists = acc_m.exists(AccountField::Email).await.unwrap();
+    /// // This will return false because johndoe does not exist.
+    /// println!("{}", exists)
+    /// 
+    /// acc_m.create();
+    /// let exists = acc_m.exists(AccountField::Email).await.unwrap();
+    /// // This will return true because the account will be there.
+    /// println!("{}", exists)
     /// ```
     pub async fn exists(
         &self,

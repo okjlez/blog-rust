@@ -5,7 +5,6 @@ use core::fmt;
 pub enum Error {
     //models//user.rs 
     AccountNotFound(String),
-    AccountFieldEmpty(String),
     AccountExists(String),
     UsernameTaken(String),
     EmailTaken(String),
@@ -41,12 +40,7 @@ impl fmt::Display for Error {
                 f,
                 "The email '{}' is already taken",
                 email
-            ),
-            Error::AccountFieldEmpty(field) => write!(
-                f,
-                "The account field '{}' is already taken",
-                field
-            ),
+            )
         }
     }
 }
