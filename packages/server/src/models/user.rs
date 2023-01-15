@@ -123,9 +123,6 @@ impl fmt::Display for AccountField {
     }
 } 
 
-
-
-
 #[derive(
     Debug,
     Clone,
@@ -209,37 +206,27 @@ impl Account {
     }
 
     /// Returns the id of the account.
-    pub fn id(
-        self
-    ) -> String {
+    pub fn id(self) -> String {
         self.id
     }
 
     /// Returns the username of the account.
-    pub fn username(
-        self
-    ) -> String {
+    pub fn username(self) -> String {
         self.username.unwrap()
     }
     
     /// Returns the password of the account.
-    pub fn password(
-        self
-    ) -> String {
+    pub fn password(self) -> String {
         self.password.unwrap()
     }
 
     /// Returns the email of the account.
-    pub fn email(
-        self
-    ) -> String {
+    pub fn email(self) -> String {
         self.email.unwrap()
     }
     
     /// Returns the rank of the account.
-    pub fn rank(
-        self
-    ) -> Rank {
+    pub fn rank(self) -> Rank {
         self.rank
     }
 }
