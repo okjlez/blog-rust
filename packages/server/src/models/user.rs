@@ -8,7 +8,7 @@ use nanoid::format;
 use postgres_types::{ToSql, FromSql};
 use rocket::serde::{Serialize, Deserialize};
 
-use crate::{traits::query::QueryCrud, error::Error};
+use crate::{traits::query::{QueryCud}, error::Error};
 
 pub struct AccountConfig<'a> {
     query: &'a Object,
@@ -30,34 +30,35 @@ impl AccountConfig<'_> {
         check_for: AccountField //cf
     ) -> bool {
         let q = self.query;
-        let cfe = check_for.to_string();
-        let cfv = AccountField::obtain(
-            &check_for, 
-            self.acc.to_owned()).unwrap();
-        let a = format!("
-            SELECT {} FROM accounts WHERE {} = $1", cfe, cfe 
-        );
-        let b = q.
-            prepare(&a).await.unwrap();
-        let c = q.
-            query(&b, &[&cfv]).await.unwrap();
-        return !c.is_empty();
+        let f = check_for.to_string();
+        let v = AccountField::obtain(&check_for, self.acc.to_owned()).unwrap();
+
+        let sql = format!(
+            "SELECT {} FROM accounts WHERE {} = $1", f, f);
+        let s = q.prepare(&sql).
+            await.unwrap();
+        let r = q.query(&s, &[&v])
+        .await.unwrap();
+        return !r.is_empty();
     }
 }
-
+/* 
 #[async_trait]
-impl QueryCrud for AccountConfig<'_, > {
+impl QueryCud for AccountConfig<'_, > {
     async fn create(&self) -> Result<(), Error> {
+        
         let acc = self.acc.to_owned();
         let cf_username = self
             .exists(AccountField::Username).await;
         let cf_email = self
             .exists(AccountField::Email).await;
         if cf_username { 
-            return Err(Error::UsernameTaken(acc.username()))
+            return Err(
+                Error::UsernameTaken(acc.username()))
         }
         if cf_email { 
-            return Err(Error::EmailTaken(acc.email()))
+            return Err(
+                Error::EmailTaken(acc.email()))
         }
         let q = self.query;
         let a = "
@@ -83,14 +84,12 @@ impl QueryCrud for AccountConfig<'_, > {
                 &acc.password.clone().unwrap(), 
                 &acc.rank])
             .await.unwrap();
-         Ok(())
-    }
-
-    async fn read(&self) -> Result<(), Error> {
-        todo!()
+            
+         todo!()
     }
 
     async fn update(&self) -> Result<(), Error> {
+
         todo!()
     }
 
@@ -98,6 +97,7 @@ impl QueryCrud for AccountConfig<'_, > {
         todo!()
     }
 }
+*/
 
 impl AccountField {
     fn obtain(

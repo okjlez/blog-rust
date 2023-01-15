@@ -13,6 +13,7 @@ mod models;
 mod traits;
 mod session;
 mod error;
+mod routes;
 
 //api/account/new POST
 //api/account/remove POST
