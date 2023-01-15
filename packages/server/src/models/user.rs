@@ -225,7 +225,7 @@ impl AccountConfig<'_> {
     pub async fn exists(
         &self,
         check_for: AccountField
-    ) -> Result<bool, Error> {
+    ) -> bool {
         let qry = self.query;
         let f = check_for.to_string();
         let v = AccountField::obtain(&check_for, self.acc.to_owned()).unwrap();
@@ -237,18 +237,14 @@ impl AccountConfig<'_> {
         let c = qry
             .query(&b, &[&v])
             .await.unwrap();
-        if !c.is_empty() {
-            return Ok(true);
-        } else {
-            return Err(Error::AccountNotFound(v))
-        }
+        return !c.is_empty()
     }
 }
 
 #[async_trait]
 impl QueryCrud for AccountConfig<'_, > {
-    
     async fn create(&self) -> Result<(), Error> {
+        /*
         let acc = &self.acc;
         let qry = self.query;
         let a = "
@@ -276,6 +272,8 @@ impl QueryCrud for AccountConfig<'_, > {
                 &acc.rank])
             .await.unwrap();
         Ok(())
+        */
+        todo!()
     }
 
     async fn read(&self) -> Result<(), Error> {
