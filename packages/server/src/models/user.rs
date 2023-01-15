@@ -1,5 +1,5 @@
-use core::fmt;
 /// A simple, yet effective account system.
+use core::fmt;
 
 use std::{time::{self, UNIX_EPOCH}, borrow::{Cow}};
 use async_trait::async_trait;
@@ -22,6 +22,28 @@ pub enum AccountField {
     Password,
     Email,
     Rank
+}
+
+impl AccountConfig<'_> {
+    pub async fn exists(
+        &self,
+        check_for: AccountField //cf
+    ) -> bool {
+        let query = self.query;
+        let cfe = check_for.to_string();
+        let cfv = AccountField::obtain(
+            &check_for, 
+            self.acc.to_owned()).unwrap();
+        let a = format!("
+            SELECT {} FROM accounts WHERE {} = $1", cfe, cfe 
+        );
+        let b = query.
+            prepare(&a).await.unwrap();
+        let c = query.
+            query(&b, &[&cfv]).await.unwrap();
+        return !c.is_empty();
+    }
+
 }
 
 impl AccountField {
@@ -47,28 +69,6 @@ impl fmt::Display for AccountField {
         write!(f, "{:?}", self)
     }
 } 
-
-impl AccountConfig<'_> {
-    pub async fn exists(
-        &self,
-        check_for: AccountField //cf
-    ) -> bool {
-        let query = self.query;
-        let cfe = check_for.to_string();
-        let cfv = AccountField::obtain(
-            &check_for, 
-            self.acc.to_owned()).unwrap();
-        let a = format!("
-            SELECT {} FROM accounts WHERE {} = $1", cfe, cfe 
-        );
-        let b = query.
-            prepare(&a).await.unwrap();
-        let c = query.
-            query(&b, &[&cfv]).await.unwrap();
-        return !c.is_empty();
-    }
-
-}
 
 #[async_trait]
 impl QueryCrud for AccountConfig<'_, > {
@@ -118,6 +118,8 @@ impl QueryCrud for AccountConfig<'_, > {
         todo!()
     }
 }
+
+
 
 #[derive(
     Debug,
