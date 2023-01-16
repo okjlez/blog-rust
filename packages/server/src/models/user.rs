@@ -43,14 +43,14 @@ impl AccountConfig {
         let query = pg.query(
             &stmt, 
             &[
-                    &acc.id,
-                    &acc.username,
-                    &acc.email,
-                    &password.hash
-                        .unwrap()
-                        .to_string(),
-                    &acc.password_salt,
-                    &acc.rank
+                &acc.id,
+                &acc.username,
+                &acc.email,
+                &password.hash
+                    .unwrap()
+                    .to_string(),
+                &acc.password_salt,
+                &acc.rank
                 ]).await;
         match query {
             Ok(_) => {
