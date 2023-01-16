@@ -53,9 +53,8 @@ async fn main() -> Result<(), rocket::Error> {
     
     let acc_config = user::AccountConfig::new(pool);
     let acc = user::Account::new("john", "12346", "email@gmail.com");
-    let yes = acc_config.account_exists("id", "1673746031502691400").await;
+    //let yes = acc_config.account_exists("id", "1673746031502691400").await;
     
-    println!("{}", yes);
    // let manage = acc_config.create_acc(acc)
 
 

@@ -17,14 +17,39 @@ impl AccountConfig {
             pg_pool: Arc::new(pg_pool)
         }
     }
-    
-    pub async fn account_exists<'c, V>(
+
+    async fn create(&self, acc: Account) -> Result<(), Error>{
+        let is_name_taken = self.account_exists("username", acc.username()).await;
+        let is_email_taken = self.account_exists("email", acc.email()).await;
+
+        if is_name_taken {
+            return Err(
+                Error::UsernameTaken(acc.username().to_string()))
+        }
+        if is_email_taken {
+            return Err(
+                Error::EmailTaken(acc.email().to_string()))
+        }
+
+        let object = &self.pg_pool.get().await.
+        unwrap();
+        let sql = format!("
+        SELECT create_account(
+            $1, $2, $3, $4, $5
+        )");
+        todo!()
+    }
+
+    async fn account_exists<'c, V>(
         &self, 
         field: &str, 
         search_for: V
     ) -> bool
-    where V: Into<Cow<'c, str>> + Sync + ToSql {
-        let object = &self.pg_pool.get().await.unwrap();
+    where V: Into<Cow<'c, str>> + Sync + ToSql  {
+        if field == "rank" { return false; }
+        let object = &self.pg_pool.get().await.
+        unwrap();
+
         let sql = format!("
         SELECT EXISTS 
         (
