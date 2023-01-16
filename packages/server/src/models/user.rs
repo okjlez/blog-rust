@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::{self, UNIX_EPOCH}};
+use std::{sync::Arc, time::{self, UNIX_EPOCH, SystemTime}};
 
 use deadpool_postgres::Pool;
 use pbkdf2::{password_hash::SaltString};
@@ -26,15 +26,41 @@ impl AccountConfig {
             pg_pool: Arc::new(pg_pool)
         }
     }
-    //todo add formatting email...
+
+    pub fn create() -> Result<(), Error> {
+        todo!()
+    }
+    
+    // anything prefixed with quik is used to help split
+    // the code into smaller chunks. the function name should
+    // give you an idea of what it does.
+    pub fn quik_pass(acc: &Account, password: String) -> String {
+        let salt_s = acc.password_salt.as_str();
+        let salt = SaltString::new(salt_s).unwrap();
+        Pbkdf2.hash_password(
+            password.as_bytes(), 
+            &salt
+        ).unwrap().to_string()
+    }
+
+    pub fn quik_salt() -> String {
+        let salt = SaltString::generate(&mut OsRng);
+        salt.as_salt().to_string()
+    }
+
+    pub fn quik_id() -> String {
+        let st = SystemTime::now();
+        let st_ds = 
+            st.duration_since(UNIX_EPOCH).unwrap();
+        st_ds.as_nanos().to_string()
+    }
+    /* 
     pub async fn create_account(&self, acc: Account) -> Result<(), Error>{
         let pg = &self.pg_pool.get()
         .await.unwrap();
         let salt = SaltString::
             new(&acc.password_salt.as_str()).unwrap();
-        let password = Pbkdf2.hash_password(
-            &acc.password.as_bytes(), 
-            &salt).unwrap();
+        
         let sql = "
         SELECT create_account(
             $1, $2, $3, $4, $5, $6
@@ -79,6 +105,7 @@ impl AccountConfig {
             },
         }
     }
+    */
 }
 
 #[derive(
@@ -128,26 +155,22 @@ impl Account {
     ) -> Self 
     where V: Into<Cow<'c, str>> {
         let mut acc = Account::default();
+        let pass = password.into().to_string();
         acc.username = username.into().to_string();
-        acc.password = password.into().to_string();
+        acc.password = AccountConfig::quik_pass(&acc, pass);
         acc.email = email.into().to_string();
         acc
     }
-
 }
 impl Default for Account { 
     fn default() -> Self {
         Account { 
-            id: time::SystemTime::now()
-            .duration_since(UNIX_EPOCH).unwrap()
-            .as_nanos().to_string(),
-            username: "".to_string(), 
-            password: "".to_string(), 
-            password_salt: SaltString::
-            generate(&mut OsRng)
-            .as_salt().to_string(),
-            email: "".to_string(), 
-            rank: Rank::default() 
+            id: AccountConfig::quik_id(),
+            username: String::new(), 
+            password: String::new(), 
+            password_salt: AccountConfig::quik_salt(),
+            email: String::new(), 
+            rank: Rank::default()
         }
     }
 }

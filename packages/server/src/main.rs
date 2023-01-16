@@ -3,7 +3,7 @@ use std::{time::{self}, collections::HashMap, env};
 
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
-use models::user;
+use models::user::{self, Account};
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
 use tokio_postgres::NoTls;
 
@@ -52,9 +52,8 @@ async fn main() -> Result<(), rocket::Error> {
     
     
     let acc_config = user::AccountConfig::new(pool);
-    let acc = user::Account::new("john12", "12346", "hoar@gmail.com");
-
-    acc_config.create_account(acc).await.unwrap();
+    let acc = user::Account::new("john12", "12346", "hoar@gmail.com");  
+    //acc_config.create_account(acc).await.unwrap();
     //let yes = acc_config.account_exists("id", "1673746031502691400").await;
     
    // let manage = acc_config.create_acc(acc)
