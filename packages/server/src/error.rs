@@ -7,6 +7,7 @@ pub enum Error {
     AccountNotFound(String),
     AccountExists(String),
     UniqueViolation(String),
+    ConstraintViolation(String),
     IdNotMutable(String),
     WrongDataType(String, String),
     //models//sesison.rs
@@ -43,6 +44,11 @@ impl fmt::Display for Error {
                 need, given
             ),
             Error::UniqueViolation(db_message) => write!(
+                f,
+                "{}", 
+                db_message
+            ),
+            Error::ConstraintViolation(db_message) => write!(
                 f,
                 "{}", 
                 db_message

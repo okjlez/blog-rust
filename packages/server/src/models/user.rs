@@ -26,7 +26,7 @@ impl AccountConfig {
             pg_pool: Arc::new(pg_pool)
         }
     }
-
+    //todo add formatting email...
     pub async fn create_account(&self, acc: Account) -> Result<(), Error>{
         let pg = &self.pg_pool.get()
         .await.unwrap();
@@ -59,10 +59,23 @@ impl AccountConfig {
                 Ok(())
             },
             Err(er) => {
-                let error_message = er
-                .as_db_error().unwrap()
+                let error_message = er.as_db_error().unwrap()
                 .message();
-                Err(Error::UniqueViolation(error_message.to_string()))
+                let error_code = er.as_db_error()
+                .unwrap()
+                .code()
+                .code().to_string();
+                //constraint violation
+                if error_code.eq("23514") {
+                    return Err(
+                        Error::ConstraintViolation(
+                            error_message.to_string()
+                        ))
+                }
+                //unique violation..
+                Err(Error::UniqueViolation(
+                    error_message.to_string()
+                ))
             },
         }
     }

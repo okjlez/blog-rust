@@ -47,7 +47,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE EXCEPTION UsernameTaken 'Username is taken';
+
+DOMAIN CONSTRAINTS
+CREATE DOMAIN email AS varchar(255)
+CHECK (value ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+
 
 
 POSTGRES Error Codes
