@@ -21,12 +21,27 @@ pub struct AccountConfig {
 }
 
 impl AccountConfig {
+
+    /// Constructs a new [`AccountConfig`]. This method is used to help
+    /// instantiate the the deadpool-postgres pool type. A necessity.
+    /// for this class.
+    ///
+    /// # Example
+    ///
+    /// Create a custom `299` status:
+    ///
+    /// ```rust
+    /// # extern crate rocket;
+    /// use rocket::http::Status;
+    ///
+    /// let custom = Status::new(299);
+    /// assert_eq!(custom.code, 299);
+    /// ```   
     pub fn new(pg_pool: Pool) -> AccountConfig {
-        Self {
-            pg_pool: Arc::new(pg_pool)
-        }
+        Self { pg_pool: Arc::new(pg_pool)}
     }
 
+    
     pub fn create() -> Result<(), Error> {
         todo!()
     }

@@ -1,6 +1,7 @@
 use std::{time::{self}, collections::HashMap, env};
 
 
+use account::config::AccountConfig;
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
 use models::user::{self, Account};
@@ -12,6 +13,7 @@ mod traits;
 mod session;
 mod error;
 mod routes;
+mod account;
 
 //api/account/new POST
 //api/account/remove POST
@@ -49,10 +51,10 @@ async fn main() -> Result<(), rocket::Error> {
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let client_object = pool.get().await.unwrap();
 
+    //AccountConfig
     
-    
-    let acc_config = user::AccountConfig::new(pool);
-    let acc = user::Account::new("john12", "12346", "hoar@gmail.com");  
+    //let acc_config = user::AccountConfig::new(pool);
+    //let acc = user::Account::new("john12", "12346", "hoar@gmail.com");  
     //acc_config.create_account(acc).await.unwrap();
     //let yes = acc_config.account_exists("id", "1673746031502691400").await;
     
