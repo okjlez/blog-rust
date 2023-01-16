@@ -4,6 +4,7 @@
 //^ header (project_key=323223, requested_method=login) pointless.ai will be running multiple sites not just my own at the moment projectkey tells it what api it should use.
 // it locates the correct post url based on the method and project key.;
 
+/*
 pub mod session_manager {
     use nanoid::nanoid;
     
@@ -52,10 +53,11 @@ pub mod posts {
      } 
 }
 
-/*
+
    pub fn new<N, V>(name: N, value: V) -> Self
         where N: Into<Cow<'c, str>>,
               V: Into<Cow<'c, str>>
     {
         CookieBuilder { cookie: Cookie::new(name, value) }
-    } */
+    } 
+    */

@@ -1,10 +1,21 @@
-use std::{sync::{Arc, RwLock}, time::{self, UNIX_EPOCH}, borrow::Cow};
+use std::{sync::Arc, time::{self, UNIX_EPOCH}};
 
-use deadpool_postgres::{Object, Pool};
-use postgres_types::{ToSql, FromSql};
+use deadpool_postgres::Pool;
+use pbkdf2::{password_hash::SaltString, pbkdf2};
+use postgres_types::ToSql;
+use rand_core::OsRng;
 use rocket::serde::{Deserialize, Serialize};
+use tokio_postgres::types::FromSql;
+use std::borrow::Cow;
+use pbkdf2::{
+    password_hash::{
+        PasswordHash, PasswordHasher, PasswordVerifier
+    },
+    Pbkdf2
+};
 
 use crate::error::Error;
+
 
 // Contains communication
 pub struct AccountConfig {
@@ -18,70 +29,70 @@ impl AccountConfig {
         }
     }
 
-    async fn create(&self, acc: Account) -> Result<(), Error>{
-        let is_name_taken = self.account_exists("username", acc.username()).await;
-        let is_email_taken = self.account_exists("email", acc.email()).await;
-
-        if is_name_taken {
-            return Err(
-                Error::UsernameTaken(acc.username().to_string()))
-        }
-        if is_email_taken {
-            return Err(
-                Error::EmailTaken(acc.email().to_string()))
-        }
-
-        let object = &self.pg_pool.get().await.
-        unwrap();
-        let sql = format!("
+    pub async fn create_account(&self, acc: Account) -> Result<(), Error>{
+        let pg = &self.pg_pool.get()
+        .await.unwrap();
+        let salt = SaltString::
+            new(&acc.password_salt.as_str()).unwrap();
+        
+        let password = Pbkdf2.hash_password(
+            &acc.password.as_bytes(), 
+            &salt).unwrap();
+        let sql = "
         SELECT create_account(
-            $1, $2, $3, $4, $5
-        )");
-        todo!()
+            $1, $2, $3, $4, $5, $6
+        )";
+        let stmt = pg.prepare(&sql).await.unwrap();
+        let query = pg.query(
+            &stmt, 
+            &[
+                &acc.id,
+                &acc.username,
+                &acc.email,
+                &password.hash.unwrap().to_string(),
+                &acc.password_salt,
+                &acc.rank
+                ]).await;
+        
+        match query {
+            Ok(_) => {
+                println!("{}", "Successfully created an account.");
+                //log the account here...
+                Ok(())
+            },
+            Err(er) => {
+                let error_message = er
+                .as_db_error().unwrap()
+                .message();
+                Err(Error::UniqueViolation(error_message.to_string()))
+            },
+        }
     }
-
-    async fn account_exists<'c, V>(
-        &self, 
-        field: &str, 
-        search_for: V
-    ) -> bool
-    where V: Into<Cow<'c, str>> + Sync + ToSql  {
-        if field == "rank" { return false; }
-        let object = &self.pg_pool.get().await.
-        unwrap();
-
-        let sql = format!("
-        SELECT EXISTS 
-        (
-            SELECT 1 from accounts 
-            WHERE {} = $1
-        );", field.to_string());
-        let a = object.prepare(&sql).await.unwrap();
-        let b = object.query(&a, &[&search_for]).await.unwrap();
-        let result: bool = b[0].get(0);
-        result
-    }
-
-    /* 
-    pub fn create(&self, acc: Account){}
-    pub fn update(&self, acc: Account){}
-    pub fn delete(&self, acc: Account){}
-    pub fn load(&self, acc: Account){}*/
 }
 
+#[derive(
+    Debug,
+    Clone,
+    Serialize, 
+    Deserialize
+)]
+#[serde(crate = "rocket::serde")]
 pub struct Account {
     #[ignore]
     id: String,
-    username: Option<String>,
-    password: Option<String>,
-    email: Option<String>,
+    username: String,
+    password: String,
     #[ignore]
-    rank: AccountRank
+    password_salt: String,
+    email: String,
+    #[ignore]
+    rank: Rank
 }
 
 #[derive(
     Default,
     Debug,
+    Clone,
     PartialEq, 
     Serialize, 
     Deserialize, 
@@ -89,7 +100,7 @@ pub struct Account {
     FromSql
 )]
 #[serde(crate = "rocket::serde")]
-pub enum AccountRank {
+pub enum Rank {
     #[default]
     None,
     Member,
@@ -99,50 +110,33 @@ pub enum AccountRank {
 }
 
 impl Account {
-    pub fn new(
-        name: &str, 
-        pass: &str, 
-        email: &str
-    ) -> Account {
+    pub fn new<'c, V>(
+        username: V, 
+        password: V, 
+        email: V
+    ) -> Self 
+    where V: Into<Cow<'c, str>> {
         let mut acc = Account::default();
-        acc.username =  Some(name.to_string());
-        acc.password = Some(pass.to_string());
-        acc.email = Some(name.to_string());
+        acc.username = username.into().to_string();
+        acc.password = password.into().to_string();
+        acc.email = email.into().to_string();
         acc
     }
 
-    pub fn id(&self) -> &String {
-        &self.id
-    }
-
-    pub fn username(&self) -> &String {
-        &self.username.as_ref().unwrap()
-    }
-
-    pub fn password(&self) -> &String {
-        &self.password.as_ref().unwrap()
-    }
-
-    pub fn email(&self) -> &String {
-        &self.email.as_ref().unwrap()
-    }
-    
-    pub fn rank(&self) -> &AccountRank {
-        &self.rank
-    }
 }
-
-impl Default for Account {
+impl Default for Account { 
     fn default() -> Self {
-        Self { 
+        Account { 
             id: time::SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos().to_string(), 
-            username: Default::default(), 
-            password: Default::default(), 
-            email: Default::default(),
-            rank: AccountRank::default(),
+            .duration_since(UNIX_EPOCH).unwrap()
+            .as_nanos().to_string(),
+            username: "".to_string(), 
+            password: "".to_string(), 
+            password_salt: SaltString::
+            generate(&mut OsRng)
+            .as_salt().to_string(),
+            email: "".to_string(), 
+            rank: Rank::default() 
         }
     }
 }

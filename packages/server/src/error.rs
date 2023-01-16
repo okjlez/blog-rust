@@ -6,8 +6,7 @@ pub enum Error {
     //models//user.rs 
     AccountNotFound(String),
     AccountExists(String),
-    UsernameTaken(String),
-    EmailTaken(String),
+    UniqueViolation(String),
     IdNotMutable(String),
     WrongDataType(String, String),
     //models//sesison.rs
@@ -33,16 +32,6 @@ impl fmt::Display for Error {
                 "This account '{}' already exists" ,
                 account
             ),
-            Error::UsernameTaken(username) => write!(
-                f,
-                "The username '{}' is already taken",
-                username
-            ),
-            Error::EmailTaken(email) => write!(
-                f,
-                "The email '{}' is already taken",
-                email
-            ),
             Error::IdNotMutable(id) => write!(
                 f,
                 "Id change is not permittable {}",
@@ -52,6 +41,11 @@ impl fmt::Display for Error {
                 f,
                 "Wrong datatype NEED({}) != GIVEN({})",
                 need, given
+            ),
+            Error::UniqueViolation(db_message) => write!(
+                f,
+                "{}", 
+                db_message
             ),
         }
     }
