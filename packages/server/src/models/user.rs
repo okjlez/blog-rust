@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::{self, UNIX_EPOCH}};
 
 use deadpool_postgres::Pool;
-use pbkdf2::{password_hash::SaltString, pbkdf2};
+use pbkdf2::{password_hash::SaltString};
 use postgres_types::ToSql;
 use rand_core::OsRng;
 use rocket::serde::{Deserialize, Serialize};
@@ -9,15 +9,13 @@ use tokio_postgres::types::FromSql;
 use std::borrow::Cow;
 use pbkdf2::{
     password_hash::{
-        PasswordHash, PasswordHasher, PasswordVerifier
+        PasswordHasher
     },
     Pbkdf2
 };
 
 use crate::error::Error;
 
-
-// Contains communication
 pub struct AccountConfig {
     pg_pool: Arc<Pool>
 }
@@ -34,7 +32,6 @@ impl AccountConfig {
         .await.unwrap();
         let salt = SaltString::
             new(&acc.password_salt.as_str()).unwrap();
-        
         let password = Pbkdf2.hash_password(
             &acc.password.as_bytes(), 
             &salt).unwrap();
@@ -46,14 +43,15 @@ impl AccountConfig {
         let query = pg.query(
             &stmt, 
             &[
-                &acc.id,
-                &acc.username,
-                &acc.email,
-                &password.hash.unwrap().to_string(),
-                &acc.password_salt,
-                &acc.rank
+                    &acc.id,
+                    &acc.username,
+                    &acc.email,
+                    &password.hash
+                        .unwrap()
+                        .to_string(),
+                    &acc.password_salt,
+                    &acc.rank
                 ]).await;
-        
         match query {
             Ok(_) => {
                 println!("{}", "Successfully created an account.");
