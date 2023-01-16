@@ -3,11 +3,9 @@ use std::{time::{self}, collections::HashMap, env};
 
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
-use models::user::{Account, AccountField};
+use models::user;
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
 use tokio_postgres::NoTls;
-use traits::query::QueryCrud;
-use std::time::UNIX_EPOCH;
 
 mod models;
 mod traits;
@@ -51,9 +49,33 @@ async fn main() -> Result<(), rocket::Error> {
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let client_object = pool.get().await.unwrap();
 
-    let acc = Account::new("johndoed", "1234", "johndoe@gmail.com");
-    let acc_m = acc.m(&client_object);
-    acc_m.create().await.unwrap();
+    
+    
+    let acc_config = user::AccountConfig::new(pool);
+    let acc = user::Account::new("john", "12346", "email@gmail.com");
+    let yes = acc_config.account_exists("id", "1673746031502691400").await;
+    
+    println!("{}", yes);
+   // let manage = acc_config.create_acc(acc)
+
+
+    
+    
+    
+    /*
+        let acc_config = user::Config::new();
+        acc_config.set_pg_db(Acc);
+        let acc = acc_config.load_acc(id_representation);
+        acc_config = user::Session::load(){}
+    */
+    
+    
+    //let acc = Account::new("johndoed", "1234", "johndoe@gmail.com");
+   // let acc = Account::load_account
+    //let acc_m = acc.m(&client_object);
+    //acc_m.update(AccountField::Rank, Rank::Admin).await.unwrap();
+
+    
    // acc_m.exists(AccountField::Email).await.unwrap();
 
     /*      
