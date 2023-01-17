@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH}, env, fmt::format};
+use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH}};
 use std::fs::File;
 use std::path::Path;
 
@@ -7,12 +7,15 @@ use pbkdf2::password_hash::{SaltString, PasswordHasher};
 use pbkdf2::Pbkdf2;
 use postgres_types::ToSql;
 use rand_core::OsRng;
+use tokio_postgres::Row;
+
+use crate::error::Error;
 
 use super::{enums::Rank, error::AccountError};
 
 macro_rules! add_commit_prereq {
     ($conn:item) => {
-        $conn. 
+        
     };
 } 
 
@@ -24,10 +27,9 @@ pub struct AccountConfig {
     // The deadpool_pg pool instance (wrapped in an arc.).
     pg_pool: Arc<Pool>
 }
-
 impl AccountConfig {
     /// Constructs a new [`AccountConfig`]. This method is used to help
-    /// instantiate the the deadpool-postgres pool type. A necessity.
+    /// instantiate the deadpool-postgres pool. A necessity.
     /// for this class. 
     ///
     /// # Example
@@ -45,7 +47,6 @@ impl AccountConfig {
             table_name: table_name.to_string(),
             pg_pool: Arc::new(pg_pool)
         };
-        acc_config.open_sesame();
         acc_config
     }
 
@@ -83,50 +84,18 @@ impl AccountConfig {
     /// acc_config.create(acc);
     /// ```
     pub async fn create(&self, acc: Account) -> Result<(), AccountError>{
-        let pg = &self.pg_pool.get().await.unwrap();
-        
-
-
-        //pg.simple_query(include_str!("")).await.unwrap();
-        
-
-        /* 
-        let pg = &self.pg_pool.get().await.unwrap();
         let sql = "SELECT create_account($1, $2, $3, $4, $5, $6)";
-        let stmt = pg.prepare(&sql).await.unwrap();
-        let test = include_str!("../sql/create_domains.sql");
-        println!("{:#?}", test);
-        */
-        /* 
-        let pg = &self.pg_pool.get().await.unwrap();
-        let sql = "SELECT create_account($1, $2, $3, $4, $5, $6)";
-        let stmt = pg.prepare(&sql).await.unwrap();
-        let res = pg.query(&stmt, &[
-            acc.id(), acc.username(), 
-            acc.email(), acc.password(), 
-            acc.password_salt(), acc.rank()]).await;
-        match res {
+        let result = &self.quik_query(sql, &[&acc.id(), acc.username(), acc.email(), acc.password(), acc.password_salt(), acc.rank()]).await;
+        match result {
             Ok(v) => Ok({
-                println!("ACCOUNT SUCCESS {}" , "YES");
+                println!("{}", "Success")
             }),
             Err(er) => {
-                let error_message = er.as_db_error().unwrap()
-                .message().to_string();
-                let error_code = er.as_db_error()
-                .unwrap()
-                .code()
-                .code().to_string();
-                if error_code.eq("42P10") {
-                    return Err(AccountError::UsernameTaken(acc.username));
-                }
-                if error_code.eq("42P11") {
-                    return Err(AccountError::EmailTaken(acc.username));
-                }
-                Err(AccountError::InvalidFormat(error_message))
+                let db_error = er.as_db_error();
+                let db_message = db_error.unwrap().message().to_string();
+                Err(AccountError::parse_db_error(db_error, &acc, db_message))
             },
         }
-        */
-        todo!()
     }
 
     //
@@ -134,7 +103,7 @@ impl AccountConfig {
     //  (shorthands)
     // 
 
-    /// A shorthand for generating a hashed password from the pbkdf2 library.
+    /// A shorthand for generating a hashed password from the Pbkdf2 library.
     ///
     /// # Example
     /// 
@@ -148,18 +117,18 @@ impl AccountConfig {
     /// println!("{}", salt); // UtCDtWw96w324K8NIW/YANc+aHvaCMvc9yeqiyDDDTw
     /// ```
     #[inline(always)]
-    pub fn quik_pass(acc: &Account) -> String {
+    fn quik_pass(acc: &Account) -> String {
         let salt = SaltString::new(acc.password_salt()).unwrap();
         Pbkdf2.hash_password(
-            acc.password().as_bytes(), &salt).unwrap()
-            .hash.unwrap().to_string()
+            acc.password().as_bytes(), &salt)
+            .unwrap().hash.unwrap().to_string()
     }
     
     /// A shorthand for generating a salt from the pbkdf2 library.
     ///
     /// # Example
     /// 
-    /// Create a salt that is used to hash a password.
+    /// Create a salt.
     ///
     /// ```rust
     /// use account::config::AccountConfig;
@@ -168,7 +137,7 @@ impl AccountConfig {
     /// println!("{}", salt); // AJJfAf2HCkUsVk4UaOg8uA
     /// ```
     #[inline(always)]
-    pub fn quik_salt() -> String {
+    fn quik_salt() -> String {
         SaltString::generate(&mut OsRng).as_salt().to_string()    
     }
 
@@ -185,10 +154,28 @@ impl AccountConfig {
     /// println!("{}", id); // 1673890867124778800
     /// ```
     #[inline(always)]
-    pub fn quik_id() -> String {
+    fn quik_id() -> String {
         let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         time.as_nanos().to_string()
-    } 
+    }
+
+    /// A shorthand for executing queries this function
+    /// should not be used outside this module.
+    ///
+    /// # Example
+    ///
+    /// Execute a postgres query
+    /// 
+    /// ```rust
+    /// use account::config::AccountConfig;
+    ///
+    /// &self.quik_query("SELECT * from table_name");
+    /// ```
+    async fn quik_query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, tokio_postgres::Error> {
+        let pg = &self.pg_pool.get().await.unwrap();
+        let stmt = pg.prepare(&sql).await.unwrap();
+        pg.query(&stmt, params).await
+    }
 }
 
 /// The blueprint for an account. 

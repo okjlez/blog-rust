@@ -53,7 +53,7 @@ async fn main() -> Result<(), rocket::Error> {
     let client_object = pool.get().await.unwrap();
 
     let acc_config = AccountConfig::new("accounts", pool);
-    let acc = Account::new("po", "iloveyou", "zeljkod@gmail.com");
+    let acc = Account::new("poddd", "iloveyoud", "zedljdkod@gmail.com");
     acc_config.create(acc).await.unwrap();
     //AccountConfig
     
