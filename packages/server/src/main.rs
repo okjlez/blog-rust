@@ -4,9 +4,10 @@ use std::{time::{self}, collections::HashMap, env};
 use account::config::AccountConfig;
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
-use models::user::{self, Account};
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
 use tokio_postgres::NoTls;
+
+use crate::account::config::Account;
 
 mod models;
 mod traits;
@@ -51,6 +52,8 @@ async fn main() -> Result<(), rocket::Error> {
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let client_object = pool.get().await.unwrap();
 
+    let acc_config = AccountConfig::new("accounts", pool);
+    let acc = Account::new("zeljko", "iloveyou", "zeljko@gmail.com");
     //AccountConfig
     
     //let acc_config = user::AccountConfig::new(pool);

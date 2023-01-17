@@ -1,9 +1,9 @@
-CREATE TABLE accounts {
+CREATE TABLE accounts (
     id VARCHAR(255) PRIMARY KEY,
     username username NOT NULL,
     email VARCHAR(254) NOT NULL,
     password VARCHAR(255) NOT NULL,
     password_salt VARCHAR(255) NOT NULL,
-    rank Rank NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW() AT TIME ZONE 'UTC'
-}
+    rank public."Rank" NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+)

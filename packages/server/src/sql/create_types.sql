@@ -1,4 +1,4 @@
-CREATE TYPE Rank AS ENUM (
+CREATE TYPE "Rank" AS ENUM (
     'None',
     'Member',
     'Moderator',
