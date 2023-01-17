@@ -20,7 +20,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION create_account(id varchar, username varchar, email varchar, password varchar, rank public."Rank")
+CREATE FUNCTION create_account(id varchar, username varchar, email varchar, password varchar, password_salt varchar, rank public."Rank")
 RETURNS BOOLEAN
 AS $$
 BEGIN
@@ -30,7 +30,7 @@ BEGIN
 	IF is_email_taken(email) THEN
 		RETURN FALSE;
 	END IF;
-	INSERT INTO accounts (id, username, email, password, rank) VALUES(id, username, email, password, rank);
+	INSERT INTO accounts (id, username, email, password, password_salt, rank) VALUES(id, username, email, password, password_salt, rank);
 	RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;

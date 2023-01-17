@@ -1,3 +1,5 @@
+use core::fmt;
+
 use postgres_types::{ToSql, FromSql};
 use rocket::serde::{Serialize, Deserialize};
 
@@ -15,3 +17,12 @@ pub enum Rank {
     Admin,
     Owner
 }
+
+impl fmt::Display for Rank {
+    fn fmt(
+        &self, 
+        f: &mut fmt::Formatter<'_>
+    ) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+} 
