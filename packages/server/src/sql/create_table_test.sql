@@ -1,0 +1,3 @@
+CREATE TABLE table_name (
+    id VARCHAR(255) PRIMARY KEY
+)

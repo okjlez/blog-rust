@@ -1,12 +1,20 @@
 use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH}, env, fmt::format};
 use std::fs::File;
+use std::path::Path;
 
 use deadpool_postgres::Pool;
 use pbkdf2::password_hash::{SaltString, PasswordHasher};
 use pbkdf2::Pbkdf2;
+use postgres_types::ToSql;
 use rand_core::OsRng;
 
 use super::{enums::Rank, error::AccountError};
+
+macro_rules! add_commit_prereq {
+    ($conn:item) => {
+        $conn. 
+    };
+} 
 
 /// Simple struct that helps select,insert,update and delete rows
 /// from the postgres database (for the account table :0).
@@ -54,7 +62,10 @@ impl AccountConfig {
     /// acc_config.()
     /// acc_config.open_sesame();
     /// ```
-    fn open_sesame(&self) {
+    async fn open_sesame(&self) {
+        let pg = &self.pg_pool.get().await.unwrap();
+        pg.simple_query("query").await.unwrap();
+        //add_commit_prereq!(pg)
         //load files find a way to do it i found
     }
 
@@ -65,7 +76,7 @@ impl AccountConfig {
     /// Creates a row inside the table_name table.
     ///
     /// ```rust
-    /// use account::config::AccountConfig;
+    /// use account::bv  ;
     ///
     /// let acc_config = AccountConfig::new("table_name", dpg_pool);
     /// let acc = Account::new("zeljko", "iloveyou", "zeljko@gmail.com");
@@ -73,13 +84,27 @@ impl AccountConfig {
     /// ```
     pub async fn create(&self, acc: Account) -> Result<(), AccountError>{
         let pg = &self.pg_pool.get().await.unwrap();
+        
+
+
+        //pg.simple_query(include_str!("")).await.unwrap();
+        
+
+        /* 
+        let pg = &self.pg_pool.get().await.unwrap();
+        let sql = "SELECT create_account($1, $2, $3, $4, $5, $6)";
+        let stmt = pg.prepare(&sql).await.unwrap();
+        let test = include_str!("../sql/create_domains.sql");
+        println!("{:#?}", test);
+        */
+        /* 
+        let pg = &self.pg_pool.get().await.unwrap();
         let sql = "SELECT create_account($1, $2, $3, $4, $5, $6)";
         let stmt = pg.prepare(&sql).await.unwrap();
         let res = pg.query(&stmt, &[
             acc.id(), acc.username(), 
             acc.email(), acc.password(), 
             acc.password_salt(), acc.rank()]).await;
-            
         match res {
             Ok(v) => Ok({
                 println!("ACCOUNT SUCCESS {}" , "YES");
@@ -100,6 +125,8 @@ impl AccountConfig {
                 Err(AccountError::InvalidFormat(error_message))
             },
         }
+        */
+        todo!()
     }
 
     //
@@ -161,8 +188,7 @@ impl AccountConfig {
     pub fn quik_id() -> String {
         let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         time.as_nanos().to_string()
-    }
-    
+    } 
 }
 
 /// The blueprint for an account. 
