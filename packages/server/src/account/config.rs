@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH}};
+use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH}, borrow::Cow};
 use std::fs::File;
 use std::path::Path;
 
@@ -8,8 +8,6 @@ use pbkdf2::Pbkdf2;
 use postgres_types::ToSql;
 use rand_core::OsRng;
 use tokio_postgres::Row;
-
-use crate::error::Error;
 
 use super::{enums::Rank, error::AccountError};
 
@@ -87,7 +85,7 @@ impl AccountConfig {
         let sql = "SELECT create_account($1, $2, $3, $4, $5, $6)";
         let result = &self.quik_query(sql, &[&acc.id(), acc.username(), acc.email(), acc.password(), acc.password_salt(), acc.rank()]).await;
         match result {
-            Ok(v) => Ok({
+            Ok(_) => Ok({
                 println!("{}", "Success")
             }),
             Err(er) => {
@@ -97,6 +95,12 @@ impl AccountConfig {
             },
         }
     }
+
+    /* 
+    fn update<'c, V>(&self, session_id: &str, update_field: &str, value: V) where V: Into<Cow<'c, str>> + Sync + ToSql {
+        //session_manager::get_session("SESSION_ID THAT DIRECTLY LINNKED TO ACCOUNT") // DO QUERIES DA DA DA GET DATA AND STUFF YES. :)
+    }
+    */
 
     //
     // Quik Functions

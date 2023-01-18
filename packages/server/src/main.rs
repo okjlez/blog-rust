@@ -9,11 +9,6 @@ use tokio_postgres::NoTls;
 
 use crate::account::config::Account;
 
-mod models;
-mod traits;
-mod session;
-mod error;
-mod routes;
 mod account;
 
 //api/account/new POST
@@ -55,6 +50,7 @@ async fn main() -> Result<(), rocket::Error> {
     let acc_config = AccountConfig::new("accounts", pool);
     let acc = Account::new("poddd", "iloveyoud", "zedljdkod@gmail.com");
     acc_config.create(acc).await.unwrap();
+    
     //AccountConfig
     
     //let acc_config = user::AccountConfig::new(pool);
