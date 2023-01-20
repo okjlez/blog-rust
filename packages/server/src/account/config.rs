@@ -121,7 +121,7 @@ impl AccountConfig {
     /// println!("{}", salt); // UtCDtWw96w324K8NIW/YANc+aHvaCMvc9yeqiyDDDTw
     /// ```
     #[inline(always)]
-    fn quik_pass(acc: &Account) -> String {
+    fn quik_hashpass(acc: &Account) -> String {
         let salt = SaltString::new(acc.password_salt()).unwrap();
         Pbkdf2.hash_password(
             acc.password().as_bytes(), &salt)
@@ -223,7 +223,7 @@ impl Account {
     pub fn new(username: &str, password: &str, email: &str) -> Self {
         let mut acc = Account::default();
         acc.username = username.to_string();
-        acc.password = AccountConfig::quik_pass(&acc);
+        acc.password = AccountConfig::quik_hashpass(&acc);
         acc.email = email.to_string();
         acc
     }
