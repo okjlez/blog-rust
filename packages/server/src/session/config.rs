@@ -41,7 +41,6 @@ impl Session {
             account_id: acc_id.to_string(),
             expires_in
          };
-
          SessionManager { session }
     }
 
