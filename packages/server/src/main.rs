@@ -5,11 +5,13 @@ use account::config::AccountConfig;
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
+use session::config::{Session, SessionManager};
 use tokio_postgres::NoTls;
 
 use crate::account::config::Account;
 
 mod account;
+mod session;
 
 //api/account/new POST
 //api/account/remove POST
@@ -47,9 +49,14 @@ async fn main() -> Result<(), rocket::Error> {
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let client_object = pool.get().await.unwrap();
 
+    /* 
     let acc_config = AccountConfig::new("accounts", pool);
     let acc = Account::new("poddd", "iloveyoud", "zedljdkod@gmail.com");
     acc_config.create(acc).await.unwrap();
+    */
+
+    // Creates session with the user id...
+   // Session::with("1673919920888240800").create_session();
     
     //AccountConfig
     
