@@ -8,7 +8,8 @@ use super::config::Account;
 pub enum AccountError {
     UsernameTaken(String),
     EmailTaken(String),
-    InvalidFormat(String)
+    InvalidFormat(String),
+    AccountNotFound(String)
 }
 
 
@@ -30,6 +31,11 @@ impl fmt::Display for AccountError {
                 "{}",
                 db_error_message
             ),
+            AccountError::AccountNotFound(id) => write!(
+                f,
+                "No account found with id '{}'",
+                id
+            ),
         }
     }
 }
@@ -45,6 +51,9 @@ impl AccountError {
         }
         if code.eq("42P11") {
             return AccountError::EmailTaken(acc.email().to_string())
+        }
+        if code.eq("42P12") {
+            return AccountError::AccountNotFound(acc.id().to_string())
         }
         return AccountError::InvalidFormat(message)
     }

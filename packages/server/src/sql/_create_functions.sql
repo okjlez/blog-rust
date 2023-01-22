@@ -36,4 +36,23 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+CREATE FUNCTION find_by_id(target_id VARCHAR) 
+	RETURNS TABLE(
+		id VARCHAR(255),
+		username username,
+		email email,
+		password VARCHAR(255),
+		password_salt VARCHAR(255),
+		rank public."Rank",
+		created_at TIMESTAMP
+	)
+AS $$
+BEGIN 
+	PERFORM 1 from accounts WHERE accounts.id = target_id;
+	IF NOT FOUND THEN 
+		RAISE EXCEPTION 'No account found with id %', target_id USING ERRCODE = '42P12';
+	END IF;
+	RETURN QUERY SELECT accounts.id, accounts.username, accounts.email, accounts.password, accounts.password_salt, accounts.rank, accounts.created_at  FROM accounts WHERE accounts.id = target_id;
+END;
+$$ LANGUAGE plpgsql;
 

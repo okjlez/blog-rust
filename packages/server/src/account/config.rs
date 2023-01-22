@@ -5,9 +5,9 @@ use std::path::Path;
 use deadpool_postgres::Pool;
 use pbkdf2::password_hash::{SaltString, PasswordHasher};
 use pbkdf2::Pbkdf2;
-use postgres_types::ToSql;
+use postgres_types::{ToSql, FromSql};
 use rand_core::OsRng;
-use tokio_postgres::Row;
+use tokio_postgres::{Row, Column};
 
 use super::{enums::Rank, error::AccountError};
 
@@ -75,7 +75,7 @@ impl AccountConfig {
     /// Creates a row inside the table_name table.
     ///
     /// ```rust
-    /// use account::bv  ;
+    /// use account::config::AccountConfig;
     ///
     /// let acc_config = AccountConfig::new("table_name", dpg_pool);
     /// let acc = Account::new("zeljko", "iloveyou", "zeljko@gmail.com");
@@ -101,6 +101,33 @@ impl AccountConfig {
         //session_manager::get_session("SESSION_ID THAT DIRECTLY LINNKED TO ACCOUNT") // DO QUERIES DA DA DA GET DATA AND STUFF YES. :)
     }
     */
+
+    /// Finds an Account by their id inside the database and returns
+    /// [`Account`]. Just for your convenience the query also returns
+    /// created_at. 
+    ///
+    /// # Example
+    ///
+    /// Find an account by their ID.
+    ///
+    /// ```rust
+    /// use account::config::AccountConfig;
+    ///
+    /// let acc_config = AccountConfig::new("table_name", dpg_pool); 
+    /// let acc: Account = acc_config.find('1673919920888240800');
+    /// ``
+    pub async fn find(&self, account_id: &str) -> Result<Account, AccountError> {
+        let sql = "select * from find_by_id($1)";
+        let result = self.quik_query(sql, &[&account_id]).await;
+        match result {
+            Ok(res) => Ok({
+                Account::from(&res[0])
+            }),
+            Err(er) => {
+                Err(AccountError::AccountNotFound(account_id.to_string()))
+            },
+        }
+    }
 
     //
     // Quik Functions
@@ -191,6 +218,7 @@ impl AccountConfig {
 /// how to create a table.
 /// 
 /// All the 'meaty' logic should be handled in AccountConfig not here.
+#[derive(Debug, ToSql, FromSql)]
 pub struct Account {
     #[ignore]
     id: String,
@@ -279,6 +307,19 @@ impl Default for Account {
             password_salt: AccountConfig::quik_salt(), // !
             email: Default::default(), 
             rank: Rank::default()  // !
+        }
+    }
+}
+
+impl From<&Row> for Account {
+    fn from(value: &Row) -> Self {
+        Account { 
+            id: value.get(0), 
+            username: value.get(1),
+            email: value.get(2),  
+            password: value.get(3), 
+            password_salt: value.get(4), 
+            rank: value.get(5)
         }
     }
 }

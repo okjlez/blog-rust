@@ -49,6 +49,14 @@ async fn main() -> Result<(), rocket::Error> {
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let client_object = pool.get().await.unwrap();
 
+
+    let acc_config = AccountConfig::new("accounts", pool);
+    //let acc = acc_config.find("16743445648412869600").await.unwrap();
+    //let acc = Account::new("piledriver", "ddas", "piledriver@gmail.com");  
+    //acc_config.create(acc).await.unwrap();
+
+    //let acc = acc_config.find("1673919920888240800").await.unwrap();
+
     /* 
     let acc_config = AccountConfig::new("accounts", pool);
     let acc = Account::new("poddd", "iloveyoud", "zedljdkod@gmail.com");
