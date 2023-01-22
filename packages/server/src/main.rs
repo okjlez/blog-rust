@@ -5,7 +5,6 @@ use account::config::AccountConfig;
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
-use session::config::{Session, SessionManager};
 use tokio_postgres::NoTls;
 
 use crate::account::config::Account;
@@ -47,10 +46,13 @@ async fn main() -> Result<(), rocket::Error> {
     pg_cfg.manager = Some(ManagerConfig { recycling_method: RecyclingMethod::Fast });
 
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
-    let client_object = pool.get().await.unwrap();
 
+    let _rocket = rocket::build()
+    .mount("/api", account::routes::routes()).manage(pool)
+        .ignite().await?
+        .launch().await?;
+    //    let acc_cfg = AccountConfig::new("accounts", pool);
 
-    let acc_config = AccountConfig::new("accounts", pool);
     //let acc = acc_config.find("16743445648412869600").await.unwrap();
     //let acc = Account::new("piledriver", "ddas", "piledriver@gmail.com");  
     //acc_config.create(acc).await.unwrap();
@@ -141,49 +143,5 @@ async fn main() -> Result<(), rocket::Error> {
     test.create().await.unwrap();
 */
 
-    let _rocket = rocket::build()
-        .mount("/api", routes![]).manage(client_object)
-            .ignite().await?
-            .launch().await?;
-
-            /* 
-    let mut map = HashMap::new();
-    map.insert("id", time::SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos().to_string());
-    map.insert("username", "doggDDy".to_string());
-    map.insert("password", "dasdsa".to_string());
-    map.insert("email", "boss444@gmail.com".to_string());
-    map.insert("role", "member".to_string());
-    
-    let respon = r_client.post("http://127.0.0.1:8000/api/account/new")
-        .header("Content-Type", "application/json")
-        .json(&map)
-        .send()
-        .await
-        .unwrap();
-
-        println!("{:#?}", respon);
-        */
-
-    /* 
-            let test = ureq::post("http://127.0.0.1:8000/api/account/new")
-            .set("Content-Type", "application/json")
-            .set("Content-Length", "1024")
-            .set("Host", "127.0.0.1:8000")
-            .send_json(ureq::json!({
-                "id": time::SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_nanos().to_string(),
-                "username": "444",
-                "password": "4444",
-                "email": "boss444@gmail.com",
-                "role": "Ad44min",
-            })).unwrap();
-        
-            println!("{:#?}", test.status());
-            */
     Ok(())
 }

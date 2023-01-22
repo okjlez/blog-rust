@@ -7,9 +7,10 @@ use pbkdf2::password_hash::{SaltString, PasswordHasher};
 use pbkdf2::Pbkdf2;
 use postgres_types::{ToSql, FromSql};
 use rand_core::OsRng;
+use rocket::{serde::{Serialize, Deserialize}, route};
 use tokio_postgres::{Row, Column};
 
-use super::{enums::Rank, error::AccountError};
+use super::{enums::Rank, error::AccountError, routes};
 
 macro_rules! add_commit_prereq {
     ($conn:item) => {
@@ -19,13 +20,13 @@ macro_rules! add_commit_prereq {
 
 /// Simple struct that helps select,insert,update and delete rows
 /// from the postgres database (for the account table :0).
-pub struct AccountConfig {
+pub struct AccountConfig<'a> {
     // The name of the db table.
     table_name: String,
     // The deadpool_pg pool instance (wrapped in an arc.).
-    pg_pool: Arc<Pool>
+    pg_pool: &'a Pool
 }
-impl AccountConfig {
+impl<'a> AccountConfig<'a> {
     /// Constructs a new [`AccountConfig`]. This method is used to help
     /// instantiate the deadpool-postgres pool. A necessity.
     /// for this class. 
@@ -40,10 +41,10 @@ impl AccountConfig {
     /// let acc_config = AccountConfig::new("table_name", dpg_pool);
     /// ```
     #[inline(always)]
-    pub fn new(table_name: &str, pg_pool: Pool) -> Self {
+    pub fn new(table_name: &str, pg_pool: &'a Pool) -> Self {
         let acc_config = AccountConfig {
             table_name: table_name.to_string(),
-            pg_pool: Arc::new(pg_pool)
+            pg_pool: &pg_pool
         };
         acc_config
     }
@@ -218,16 +219,17 @@ impl AccountConfig {
 /// how to create a table.
 /// 
 /// All the 'meaty' logic should be handled in AccountConfig not here.
-#[derive(Debug, ToSql, FromSql)]
+#[derive(Debug, ToSql, FromSql, Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct Account {
-    #[ignore]
+    #[serde(default)]
     id: String,
     username: String,
     password: String,
-    #[ignore]
+    #[serde(default)]
     password_salt: String,
     email: String,
-    #[ignore]
+    #[serde(default)]
     rank: Rank
 }
 
