@@ -1,7 +1,7 @@
 use std::{time::{self}, collections::HashMap, env};
 
 
-use account::config::AccountConfig;
+use account::config::{AccountConfig, LoginMethod};
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
@@ -47,11 +47,21 @@ async fn main() -> Result<(), rocket::Error> {
 
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
 
+    let acc_cfg = AccountConfig::new("accounts", &pool);
+    let acc = Account::new("boss", "bossfuckyou", "boss@gmail.com"); 
+    
+    //acc_cfg.create(acc).await.unwrap();
+
+    let session = acc_cfg.auth(LoginMethod::USERNAME, "Boss", "bossfuckyou".to_string()).await.unwrap();
+
+    //let session = acc_cfg.auth(LoginMethod::USERNAME, "hoar", "dudefuckyou").await.unwrap();
+
     let _rocket = rocket::build()
     .mount("/api", account::routes::routes()).manage(pool)
         .ignite().await?
         .launch().await?;
-    //    let acc_cfg = AccountConfig::new("accounts", pool);
+
+
 
     //let acc = acc_config.find("16743445648412869600").await.unwrap();
     //let acc = Account::new("piledriver", "ddas", "piledriver@gmail.com");  

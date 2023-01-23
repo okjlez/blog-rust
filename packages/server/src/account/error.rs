@@ -9,7 +9,8 @@ pub enum AccountError {
     UsernameTaken(String),
     EmailTaken(String),
     InvalidFormat(String),
-    AccountNotFound(String)
+    AccountNotFound(String),
+    WrongPassword
 }
 
 
@@ -31,10 +32,14 @@ impl fmt::Display for AccountError {
                 "{}",
                 db_error_message
             ),
-            AccountError::AccountNotFound(id) => write!(
+            AccountError::AccountNotFound(data) => write!(
                 f,
-                "No account found with id '{}'",
-                id
+                "Could not find account with the credential '{}'",
+                data
+            ),
+            AccountError::WrongPassword => write!(
+                f,
+                "The password you entered is incorrect.",
             ),
         }
     }

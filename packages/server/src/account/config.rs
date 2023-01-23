@@ -3,12 +3,18 @@ use std::fs::File;
 use std::path::Path;
 
 use deadpool_postgres::Pool;
-use pbkdf2::password_hash::{SaltString, PasswordHasher};
-use pbkdf2::Pbkdf2;
+use pbkdf2::{
+    password_hash::{
+        rand_core::OsRng,
+        PasswordHash, PasswordHasher, PasswordVerifier, SaltString, Salt
+    },
+    Pbkdf2
+};
 use postgres_types::{ToSql, FromSql};
-use rand_core::OsRng;
-use rocket::{serde::{Serialize, Deserialize}, route};
+use rocket::{serde::{Serialize, Deserialize}, route, http::Cookie};
 use tokio_postgres::{Row, Column};
+
+use crate::session::config::Session;
 
 use super::{enums::Rank, error::AccountError, routes};
 
@@ -26,6 +32,13 @@ pub struct AccountConfig<'a> {
     // The deadpool_pg pool instance (wrapped in an arc.).
     pg_pool: &'a Pool
 }
+
+#[derive(PartialEq)]
+pub enum LoginMethod {
+    USERNAME,
+    EMAIL
+}
+
 impl<'a> AccountConfig<'a> {
     /// Constructs a new [`AccountConfig`]. This method is used to help
     /// instantiate the deadpool-postgres pool. A necessity.
@@ -83,8 +96,8 @@ impl<'a> AccountConfig<'a> {
     /// acc_config.create(acc);
     /// ```
     pub async fn create(&self, acc: Account) -> Result<(), AccountError>{
-        let sql = "SELECT create_account($1, $2, $3, $4, $5, $6)";
-        let result = &self.quik_query(sql, &[&acc.id(), acc.username(), acc.email(), acc.password(), acc.password_salt(), acc.rank()]).await;
+        let sql = "SELECT create_account($1, $2, $3, $4, $5)";
+        let result = &self.quik_query(sql, &[&acc.id(), acc.username(), acc.email(), acc.password(), acc.rank()]).await;
         match result {
             Ok(_) => Ok({
                 println!("{}", "Success")
@@ -97,16 +110,61 @@ impl<'a> AccountConfig<'a> {
         }
     }
 
+    /// Authenticate with your preferred method.
+    ///
+    /// # Example
+    ///
+    /// Creates a cookie after the authentication is successful.
+    ///
+    /// ```rust
+    /// use account::config::AccountConfig;
+    ///
+    /// let acc_config = AccountConfig::new("table_name",  dpg_pool);
+    /// // login via pass
+    /// acc_config.auth(LoginMethod::Username, "zeljko", "password")
+    /// // login via email
+    /// acc_config.auth(LoginMethod::Email, "ilovz@gmail.com", "password")
+    /// ```
+    pub async fn auth(&self, 
+        method: LoginMethod, 
+        key: &str, 
+        pass: String
+    ) -> Result<Session, AccountError> {
+        let sql = if method.eq(&LoginMethod::USERNAME) { 
+            "SELECT * from accounts where username ILIKE $1"
+        } else { 
+            "SELECT * from accounts where email ILIKE $1" 
+        };
+        let response = &self.quik_query(sql, &[&key]).await;
+
+        match response {
+            Ok(res) => {
+                let acc = Account::from(&res[0]);
+                let can_login = AccountConfig::quik_compare(&acc, &pass);
+                if can_login {
+                    println!("successfully logged in");
+                    return Ok(Session::new(acc.id()))
+                } else {
+                    return Err(AccountError::WrongPassword)
+                }
+            },
+            Err(_) => {
+                return Err(AccountError::AccountNotFound(key.to_string()))
+            },
+        }
+    }
+
     /* 
     fn update<'c, V>(&self, session_id: &str, update_field: &str, value: V) where V: Into<Cow<'c, str>> + Sync + ToSql {
         //session_manager::get_session("SESSION_ID THAT DIRECTLY LINNKED TO ACCOUNT") // DO QUERIES DA DA DA GET DATA AND STUFF YES. :)
     }
     */
 
-    /// Finds an Account by their id inside the database and returns
-    /// [`Account`]. Just for your convenience the query also returns
-    /// created_at. 
+    /// Finds an Account by their `field` inside the database and returns
+    /// [`Account`].
     ///
+    /// Available Fields: **id**, **username** and **email**.
+    /// 
     /// # Example
     ///
     /// Find an account by their ID.
@@ -115,17 +173,19 @@ impl<'a> AccountConfig<'a> {
     /// use account::config::AccountConfig;
     ///
     /// let acc_config = AccountConfig::new("table_name", dpg_pool); 
-    /// let acc: Account = acc_config.find('1673919920888240800');
+    /// let acc_by_username: Account = acc_config.find('id', '1673919920888240800');
+    /// let acc_by_password: Account = acc_config.find('username', 'zeljko');
+    /// let acc_by_email: Account = acc_config.find('email', "zeljko@gmail.com");
     /// ``
-    pub async fn find(&self, account_id: &str) -> Result<Account, AccountError> {
-        let sql = "select * from find_by_id($1)";
-        let result = self.quik_query(sql, &[&account_id]).await;
-        match result {
+    async fn find(&self, find: &str, value: &str) -> Result<Account, AccountError> {
+        let sql = format!("select * from find_by_{}($1)", find);
+        let response = self.quik_query(&sql, &[&value]).await;
+        match response {
             Ok(res) => Ok({
                 Account::from(&res[0])
             }),
             Err(er) => {
-                Err(AccountError::AccountNotFound(account_id.to_string()))
+                Err(AccountError::AccountNotFound(value.to_string()))
             },
         }
     }
@@ -148,12 +208,32 @@ impl<'a> AccountConfig<'a> {
     /// let salt = AccountConfig::quick_pass(&acc);
     /// println!("{}", salt); // UtCDtWw96w324K8NIW/YANc+aHvaCMvc9yeqiyDDDTw
     /// ```
-    #[inline(always)]
-    fn quik_hashpass(acc: &Account) -> String {
-        let salt = SaltString::new(acc.password_salt()).unwrap();
+    
+    fn quik_hashpass(pass: &str) -> String {
         Pbkdf2.hash_password(
-            acc.password().as_bytes(), &salt)
-            .unwrap().hash.unwrap().to_string()
+            pass.as_bytes(), &AccountConfig::quik_salt()).unwrap().to_string()
+    }
+
+    /// A shorthand for comparing two hashes from the Pbkdf2 library.
+    ///
+    /// # Example
+    /// 
+    /// Compares two hashed passwords.
+    ///
+    /// ```rust
+    /// use account::config::AccountConfig;
+    /// 
+    /// let acc = Account::new("zeljko", "iloveyou", "zeljko@gmail.com");
+    /// 
+    /// // false
+    /// let pass_comp_1 = AccountConfig::quik_compare(&acc, "idontloveyou");
+    /// 
+    /// // true
+    /// let pass_comp_2 = AccountConfig::quik_compare(&acc, "iloveyou");
+    /// ```
+    fn quik_compare(acc: &Account, pass: &str) -> bool {
+        let stored_pass = PasswordHash::new(acc.password()).unwrap();
+        Pbkdf2.verify_password(pass.as_bytes(), &stored_pass).is_ok()
     }
     
     /// A shorthand for generating a salt from the pbkdf2 library.
@@ -169,8 +249,8 @@ impl<'a> AccountConfig<'a> {
     /// println!("{}", salt); // AJJfAf2HCkUsVk4UaOg8uA
     /// ```
     #[inline(always)]
-    fn quik_salt() -> String {
-        SaltString::generate(&mut OsRng).as_salt().to_string()    
+    fn quik_salt() -> SaltString {
+        SaltString::generate(&mut OsRng)
     }
 
     /// A shorthand for generating a user's id.
@@ -226,8 +306,6 @@ pub struct Account {
     id: String,
     username: String,
     password: String,
-    #[serde(default)]
-    password_salt: String,
     email: String,
     #[serde(default)]
     rank: Rank
@@ -253,7 +331,7 @@ impl Account {
     pub fn new(username: &str, password: &str, email: &str) -> Self {
         let mut acc = Account::default();
         acc.username = username.to_string();
-        acc.password = AccountConfig::quik_hashpass(&acc);
+        acc.password = AccountConfig::quik_hashpass(password);
         acc.email = email.to_string();
         acc
     }
@@ -271,11 +349,6 @@ impl Account {
     // Returns the password of Account
     pub fn password(&self) -> &String {
         &self.password
-    }
-
-    // Returns the password_salt of Account
-    pub fn password_salt(&self) -> &String {
-        &self.password_salt
     }
 
     // Returns the email of Account
@@ -306,7 +379,6 @@ impl Default for Account {
             id: AccountConfig::quik_id(), 
             username: Default::default(), 
             password: Default::default(), // !
-            password_salt: AccountConfig::quik_salt(), // !
             email: Default::default(), 
             rank: Rank::default()  // !
         }
@@ -320,8 +392,7 @@ impl From<&Row> for Account {
             username: value.get(1),
             email: value.get(2),  
             password: value.get(3), 
-            password_salt: value.get(4), 
-            rank: value.get(5)
+            rank: value.get(4)
         }
     }
 }
