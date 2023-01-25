@@ -24,7 +24,7 @@ impl fmt::Display for AccountError {
             ),
             AccountError::EmailTaken(email) => write!(
                 f,
-                "The email '{}' was not found.",
+                "The email '{}' is taken.",
                 email
             ),
             AccountError::InvalidFormat(db_error_message) => write!(

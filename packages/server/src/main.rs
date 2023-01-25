@@ -1,7 +1,5 @@
-use std::{time::{self}, collections::HashMap, env};
 
-
-use account::config::{AccountConfig, LoginMethod};
+use account::{enums::LoginMethod, config::AccountConfig};
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
@@ -52,7 +50,7 @@ async fn main() -> Result<(), rocket::Error> {
     
     //acc_cfg.create(acc).await.unwrap();
 
-    let session = acc_cfg.auth(LoginMethod::USERNAME, "Boss", "bossfuckyou".to_string()).await.unwrap();
+    //let session = acc_cfg.auth(LoginMethod::Username, "CaseSensitive", "John123!".to_string()).await.unwrap();
 
     //let session = acc_cfg.auth(LoginMethod::USERNAME, "hoar", "dudefuckyou").await.unwrap();
 

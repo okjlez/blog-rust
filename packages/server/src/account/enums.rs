@@ -26,3 +26,19 @@ impl fmt::Display for Rank {
         write!(f, "{:?}", self)
     }
 } 
+
+
+#[derive(PartialEq, Debug)]
+pub enum LoginMethod {
+    Username,
+    Email
+}
+
+impl fmt::Display for LoginMethod {
+    fn fmt(
+        &self, 
+        f: &mut fmt::Formatter<'_>
+    ) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+} 

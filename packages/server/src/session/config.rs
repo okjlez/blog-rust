@@ -1,9 +1,11 @@
 use nanoid::nanoid;
-use rocket::{http::{Cookie, SameSite}, time::{Duration, OffsetDateTime}};
+use rocket::{http::{Cookie, SameSite}, time::{Duration, OffsetDateTime}, serde::{Serialize, Deserialize}};
 
+#[derive(Deserialize, Serialize)]
+#[serde(crate = "rocket::serde")]
 pub struct Session {
-    session_id: String,
-    account_id: String,
+    pub session_id: String,
+    pub account_id: String,
 }
 
 impl Session {
@@ -13,7 +15,7 @@ impl Session {
         session
     }
     
-    fn cookie(&self) -> Cookie {
+    pub fn cookie(&self) -> Cookie {
         let mut now = OffsetDateTime::now_utc();
         now += Duration::seconds(604800); // 1 week
         Cookie::build("sid", &self.session_id)

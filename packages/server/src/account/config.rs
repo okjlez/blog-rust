@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH}, borrow::Cow};
+use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH}, borrow::Cow, result};
 use std::fs::File;
 use std::path::Path;
 
@@ -11,12 +11,13 @@ use pbkdf2::{
     Pbkdf2
 };
 use postgres_types::{ToSql, FromSql};
-use rocket::{serde::{Serialize, Deserialize}, route, http::Cookie};
+use rocket::{serde::{Serialize, Deserialize, self}, route, http::Cookie, FromForm};
 use tokio_postgres::{Row, Column};
+
 
 use crate::session::config::Session;
 
-use super::{enums::Rank, error::AccountError, routes};
+use super::{enums::{Rank, LoginMethod}, error::AccountError, routes};
 
 macro_rules! add_commit_prereq {
     ($conn:item) => {
@@ -31,12 +32,6 @@ pub struct AccountConfig<'a> {
     table_name: String,
     // The deadpool_pg pool instance (wrapped in an arc.).
     pg_pool: &'a Pool
-}
-
-#[derive(PartialEq)]
-pub enum LoginMethod {
-    USERNAME,
-    EMAIL
 }
 
 impl<'a> AccountConfig<'a> {
@@ -97,7 +92,7 @@ impl<'a> AccountConfig<'a> {
     /// ```
     pub async fn create(&self, acc: Account) -> Result<(), AccountError>{
         let sql = "SELECT create_account($1, $2, $3, $4, $5)";
-        let result = &self.quik_query(sql, &[&acc.id(), acc.username(), acc.email(), acc.password(), acc.rank()]).await;
+        let result = self.quik_query(sql, &[&acc.id(), acc.username(), acc.email(), acc.password(), acc.rank()]).await;
         match result {
             Ok(_) => Ok({
                 println!("{}", "Success")
@@ -120,8 +115,10 @@ impl<'a> AccountConfig<'a> {
     /// use account::config::AccountConfig;
     ///
     /// let acc_config = AccountConfig::new("table_name",  dpg_pool);
-    /// // login via pass
+    /// 
+    /// // login via username
     /// acc_config.auth(LoginMethod::Username, "zeljko", "password")
+    /// 
     /// // login via email
     /// acc_config.auth(LoginMethod::Email, "ilovz@gmail.com", "password")
     /// ```
@@ -130,27 +127,27 @@ impl<'a> AccountConfig<'a> {
         key: &str, 
         pass: String
     ) -> Result<Session, AccountError> {
-        let sql = if method.eq(&LoginMethod::USERNAME) { 
-            "SELECT * from accounts where username ILIKE $1"
-        } else { 
-            "SELECT * from accounts where email ILIKE $1" 
-        };
-        let response = &self.quik_query(sql, &[&key]).await;
+        let sql = format!("SELECT * from accounts where {} ILIKE $1", method.to_string());
+        let response = self.quik_query(&sql, &[&key]).await;
 
+        if response.is_err() {
+            println!("ERROR")
+        }
         match response {
-            Ok(res) => {
-                let acc = Account::from(&res[0]);
-                let can_login = AccountConfig::quik_compare(&acc, &pass);
-                if can_login {
-                    println!("successfully logged in");
-                    return Ok(Session::new(acc.id()))
-                } else {
-                    return Err(AccountError::WrongPassword)
+            Ok(res) => Ok({
+                if res.len() >= 1 {
+                    let acc = Account::from(&res[0]);
+                    let can_login = AccountConfig::quik_compare(&acc, &pass);
+                    if can_login {
+                        println!("logged in");
+                        return Ok(Session::new(acc.id()))
+                    } else {
+                        return Err(AccountError::WrongPassword)
+                    }
                 }
-            },
-            Err(_) => {
                 return Err(AccountError::AccountNotFound(key.to_string()))
-            },
+            }),
+            Err(_) => todo!(), // never gets called ? even when length is 0 hmm
         }
     }
 
@@ -283,7 +280,8 @@ impl<'a> AccountConfig<'a> {
     ///
     /// &self.quik_query("SELECT * from table_name");
     /// ```
-    async fn quik_query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, tokio_postgres::Error> {
+    async fn quik_query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, tokio_postgres::Error>
+    {
         let pg = &self.pg_pool.get().await.unwrap();
         let stmt = pg.prepare(&sql).await.unwrap();
         pg.query(&stmt, params).await
@@ -309,6 +307,13 @@ pub struct Account {
     email: String,
     #[serde(default)]
     rank: Rank
+}
+
+// you can easily add username support.. due to the AccountConfig#auth() method.
+#[derive(FromForm)]
+pub struct AccountLogin {
+    pub email: String,
+    pub password: String,
 }
 
 impl Account {
