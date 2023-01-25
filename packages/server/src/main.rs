@@ -23,19 +23,9 @@ mod session;
 async fn main() -> Result<(), rocket::Error> { 
 
     // Postgres Database
-    let pg_dbname = Some(
-    dotenv::var("PG_DBNAME")
-    .expect("PG_DBNAME NOT SET"));
-    let pg_user = Some(
-    dotenv::var("PG_USER")
-    .expect("PG_USER NOT SET"));
-    let pg_pass = Some(
-    dotenv::var("PG_PASS")
-    .expect("PG_PASS NOT SET"));
-    let pg_port: Option<u16> = Some(
-    dotenv::var("PG_PORT")
-    .expect("PG_PORT NOT SET")
-    .parse().unwrap());
+    let pg_dbname = Some(dotenv::var("PG_DBNAME").expect("PG_DBNAME NOT SET"));
+    let pg_user = Some(dotenv::var("PG_USER").expect("PG_USER NOT SET"));
+    let pg_pass = Some(dotenv::var("PG_PASS").expect("PG_PASS NOT SET"));let pg_port: Option<u16> = Some(dotenv::var("PG_PORT").expect("PG_PORT NOT SET").parse().unwrap());
     let mut pg_cfg = Config::new();
     pg_cfg.dbname = pg_dbname;
     pg_cfg.user = pg_user;

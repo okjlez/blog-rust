@@ -129,17 +129,13 @@ impl<'a> AccountConfig<'a> {
     ) -> Result<Session, AccountError> {
         let sql = format!("SELECT * from accounts where {} ILIKE $1", method.to_string());
         let response = self.quik_query(&sql, &[&key]).await;
-
-        if response.is_err() {
-            println!("ERROR")
-        }
         match response {
             Ok(res) => Ok({
                 if res.len() >= 1 {
                     let acc = Account::from(&res[0]);
                     let can_login = AccountConfig::quik_compare(&acc, &pass);
                     if can_login {
-                        println!("logged in");
+                        println!("succesfully created session bla bla bla.");
                         return Ok(Session::new(acc.id()))
                     } else {
                         return Err(AccountError::WrongPassword)

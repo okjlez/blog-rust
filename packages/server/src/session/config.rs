@@ -15,6 +15,7 @@ impl Session {
         session
     }
     
+    /*
     pub fn cookie(&self) -> Cookie {
         let mut now = OffsetDateTime::now_utc();
         now += Duration::seconds(604800); // 1 week
@@ -23,6 +24,7 @@ impl Session {
         .expires(now)
         .finish()
     }
+    */
 }
 
 impl Default for Session {

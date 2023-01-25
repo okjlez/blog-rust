@@ -16,7 +16,7 @@ pub async fn account_new(_acc: Json<Account>, pool: &State<Pool>) -> Value {
     let acc_cfg = AccountConfig::new("accounts", pool.inner());
     match acc_cfg.create(account).await {
         Ok(_) => {
-            return json!({"status" : "Success"})
+            return json!({"status" : "SUCCESS"})
         },
         Err(v) => {
             return json!({"status" : "FAILED", "reason": v.to_string()})
@@ -28,19 +28,16 @@ pub async fn account_new(_acc: Json<Account>, pool: &State<Pool>) -> Value {
 #[post("/account/login", data = "<login>")]
 pub async fn account_login(jar: &CookieJar<'_>,login: Form<AccountLogin>, pool: &State<Pool>) -> Value {
     let acc_cfg = AccountConfig::new("accounts", pool.inner());
-
     match acc_cfg.auth(LoginMethod::Email, &login.email, login.password.to_string()).await {
         Ok(val) => {
             jar.add(Cookie::new("sid", val.session_id));
-            return json!({"status" : "Success session_added"})
+            return json!({"status" : "SUCCESS"})
         },
         Err(v) => {
             return json!({"status" : "FAILED", "reason": v.to_string()})
         }
     }
 }
-
-
 
 pub fn routes() -> Vec<Route> {
     routes![account_new, account_login]
