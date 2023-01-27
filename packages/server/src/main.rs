@@ -1,3 +1,27 @@
+/// A simple blog system written in rust. I made the restapi with basic 
+/// authentication(cookie auth). You should be more than capable of knowing
+/// what to do with them. I did not add the frontend just because.
+/// 
+/// Please make sure the secure, and httponly flags are enabled. 
+/// 
+/// My first project in Rust. Be gentle please. :{
+/// 
+/// * what it does not support
+/// multiple devices...
+
+/// REST API REQUESTS
+/// * ACCOUNTS * 
+/// /api/account/new POST
+/// /api/account/remove POST
+/// /api/account/update POST   
+
+/// * THREADS * 
+/// /api/thread/new POST 
+/// /api/thread/remove POST
+/// /api/thread/update POST
+/// /api/thread/retrieve POST 
+/// /api/thread/{name}
+
 
 use account::{enums::LoginMethod, config::AccountConfig};
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
@@ -10,14 +34,6 @@ use crate::account::config::Account;
 mod account;
 mod session;
 
-//api/account/new POST
-//api/account/remove POST
-//api/account/update POST   
-
-//api/thread/new POST 
-//api/thread/remove POST
-//api/thread/update POST
-//api/thread/retrieve POST 
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> { 

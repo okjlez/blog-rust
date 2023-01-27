@@ -11,7 +11,7 @@ use pbkdf2::{
     Pbkdf2
 };
 use postgres_types::{ToSql, FromSql};
-use rocket::{serde::{Serialize, Deserialize, self}, route, http::Cookie, FromForm};
+use rocket::{serde::{Serialize, Deserialize, self}, route, http::Cookie, FromForm, request::{FromRequest, self}, Request};
 use tokio_postgres::{Row, Column};
 
 
@@ -122,10 +122,10 @@ impl<'a> AccountConfig<'a> {
     /// // login via email
     /// acc_config.auth(LoginMethod::Email, "ilovz@gmail.com", "password")
     /// ```
-    pub async fn auth(&self, 
+    pub async fn auth(&self, //refractor...
         method: LoginMethod, 
         key: &str, 
-        pass: String
+        pass: &str
     ) -> Result<Session, AccountError> {
         let sql = format!("SELECT * from accounts where {} ILIKE $1", method.to_string());
         let response = self.quik_query(&sql, &[&key]).await;
@@ -135,7 +135,6 @@ impl<'a> AccountConfig<'a> {
                     let acc = Account::from(&res[0]);
                     let can_login = AccountConfig::quik_compare(&acc, &pass);
                     if can_login {
-                        println!("succesfully created session bla bla bla.");
                         return Ok(Session::new(acc.id()))
                     } else {
                         return Err(AccountError::WrongPassword)
