@@ -135,9 +135,10 @@ impl<'a> AccountConfig<'a> {
     /// ```rust
     /// use account::config::AccountConfig;
     ///
-    /// let acc_config = AccountConfig::new("table_name", dpg_pool); 
-    /// let acc_by_username: Account = acc_config.find('id', '1673919920888240800');
-    /// let acc_by_password: Account = acc_config.find('username', 'zeljko');
+    /// let acc_config = AccountConfig::new(dpg_pool); 
+    /// 
+    /// let acc_by_id: Account = acc_config.find('id', '1673919920888240800');
+    /// let acc_by_username: Account = acc_config.find('username', 'zeljko');
     /// let acc_by_email: Account = acc_config.find('email', "zeljko@gmail.com");
     /// let acc_by_session Account = acc_config.find('session', 'dDSwUKaRICtMOkQDRTB54');
     /// ``

@@ -10,6 +10,7 @@ use rocket::{serde::json::Json, post, Route};
 use rocket::{routes, State, Request, get};
 use serde_json::{Value, json};
 use crate::session::config::Session;
+use crate::thread::Thread;
 use rocket::http::Status;
 
 use super::config::{Account, AccountConfig, AccountLogin};
@@ -17,6 +18,9 @@ use super::enums::LoginMethod;
 use super::error;
 
 
+///
+/// Account Routes
+/// 
 #[post("/account/new", format = "application/json", data = "<_acc>")]
 pub async fn account_new(_acc: Json<Account>, pool: &State<Pool>) -> Value {
     let account = Account::new(_acc.username(), _acc.password(), _acc.email());
@@ -58,6 +62,22 @@ pub async fn account_logout(jar: &CookieJar<'_>) -> Redirect {
     Redirect::to("http://127.0.0.1:5173")
 }
 
+///
+/// Thread Routes
+/// 
+#[post("/thread/new", format = "application/json", data = "<_thread>")]
+pub async fn thread_new(jar: &CookieJar<'_>, _thread: Json<Thread>, pool: &State<Pool>) {
+    let cfg = AccountConfig::new(pool);
+    let thread = Thread::new(&_thread.title(), &_thread.body(), &_thread.created_by());
+    let find_acc = cfg.find("session", jar.get("sid").unwrap().value()).await.unwrap();
+
+    thread.save(cfg).await; // save thread
+    
+    println!("{}", find_acc.email());
+    
+    //thread.save(cfg).await
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![account_new, account_login, account_logout]
+    routes![account_new, account_login, account_logout, thread_new]
 }

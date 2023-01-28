@@ -10,8 +10,8 @@ use rocket::serde::{Serialize, Deserialize};
 )]
 #[serde(crate = "rocket::serde")]
 pub enum Rank {
+    None, // if you want to add sms or smtp verification this will be of use to you.
     #[default]
-    None,
     Member,
     Moderator,
     Admin,

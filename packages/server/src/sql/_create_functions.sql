@@ -86,3 +86,11 @@ $$ LANGUAGE plpgsql;
 
 ALTER TABLE sessions ADD CONSTRAINT prev_dupes UNIQUE(session_id, account_id, created_at)
 
+CREATE FUNCTION create_session(title varchar, body varchar, creator varchar, creation varchar)
+RETURNS BOOLEAN
+AS $$
+BEGIN
+	INSERT INTO sessions (title, body, created_by, created_on) VALUES(title, body, creator, creation);
+	RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;

@@ -1,10 +1,9 @@
 /// A simple blog system written in rust. I made the restapi with basic 
-/// authentication(cookie auth). You should be more than capable of knowing
-/// what to do with them. I did not add the frontend just because.
+/// authentication(cookie auth). 
 /// 
 /// Please make sure the secure, and httponly flags are enabled. 
 /// 
-/// My first project in Rust. Be gentle please. :{
+/// My first actual project in Rust.
 /// 
 /// * what it does not support
 /// multiple devices...
@@ -27,8 +26,6 @@ use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 
 use rocket::{figment::providers::{ Env, Toml}, serde::Deserialize, routes};
 use tokio_postgres::NoTls;
-
-use crate::account::config::Account;
 
 mod account;
 mod session;

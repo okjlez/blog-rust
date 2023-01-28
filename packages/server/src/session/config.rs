@@ -26,7 +26,7 @@ impl Session {
         // rushed...
         let query = cfg.quik_query(sql, & [&self.session_id, &self.account_id, &self.expires_in]).await;
         match query {
-            Ok(res) => {
+            Ok(_) => {
                 println!("[Session] Created session with account id ({})", &self.account_id);
             },
             Err(er) => {
