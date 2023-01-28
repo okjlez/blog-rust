@@ -139,8 +139,9 @@ impl<'a> AccountConfig<'a> {
     /// let acc_by_username: Account = acc_config.find('id', '1673919920888240800');
     /// let acc_by_password: Account = acc_config.find('username', 'zeljko');
     /// let acc_by_email: Account = acc_config.find('email', "zeljko@gmail.com");
+    /// let acc_by_session Account = acc_config.find('session', 'dDSwUKaRICtMOkQDRTB54');
     /// ``
-    async fn find(&self, find: &str, value: &str) -> Result<Account, AccountError> {
+    pub async fn find(&self, find: &str, value: &str) -> Result<Account, AccountError> {
         let sql = format!("select * from find_by_{}($1)", find);
         let response = self.quik_query(&sql, &[&value]).await;
         match response {

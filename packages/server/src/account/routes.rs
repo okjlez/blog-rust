@@ -7,7 +7,7 @@ use rocket::http::{CookieJar, Cookie, SameSite};
 use rocket::request::{FromRequest, self};
 use rocket::response::Redirect;
 use rocket::{serde::json::Json, post, Route};
-use rocket::{routes, State, Request};
+use rocket::{routes, State, Request, get};
 use serde_json::{Value, json};
 use crate::session::config::Session;
 use rocket::http::Status;
@@ -39,7 +39,9 @@ pub async fn account_login(jar: &CookieJar<'_>, login: Form<AccountLogin>, pool:
     let is_auth = cfg.auth(LoginMethod::Email, &email, password).await;
     match is_auth {
         Ok(res) => {
-            res.save(cfg).await; //save session to db
+            res.save(cfg).await;
+            let sid = Cookie::new("sid", res.session_id);
+            jar.add(sid);
             return Ok(
                 Redirect::to("http://127.0.0.1:5173")
             );
@@ -50,6 +52,12 @@ pub async fn account_login(jar: &CookieJar<'_>, login: Form<AccountLogin>, pool:
     }
 }
 
+#[get("/account/logout")]
+pub async fn account_logout(jar: &CookieJar<'_>) -> Redirect {
+    jar.remove(Cookie::named("sid"));
+    Redirect::to("http://127.0.0.1:5173")
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![account_login]
+    routes![account_new, account_login, account_logout]
 }

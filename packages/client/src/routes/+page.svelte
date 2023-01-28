@@ -1,10 +1,27 @@
-<h1>Welcome to SvelteKit</h1>
+<script lang="ts">
+    import Cookies from 'js-cookie';
+
+    let show = Cookies.get("sid") != null;
+
+    //prerender before page...
+</script>
+
+<h1>Simple login</h1>
 <p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
 
-<form action="http://127.0.0.1:8000/api/account/login" method="POST">
-    <label for="fname">Email</label>
-    <input type="text" id="email" name="email"><br><br>
-    <label for="lname">Password:</label>
-    <input type="text" id="password" name="password"><br><br>
+
+{#if show == true}
+<h2>You're logged in welcome!</h2>
+<ul style="width:120px;">
+    <a href="http://127.0.0.1:8000/api/account/logout">create thread</a>
+    <a href="http://127.0.0.1:8000/api/account/logout">logout</a>
+</ul>
+{/if}
+
+{#if show == false}
+<form id="login" action="http://127.0.0.1:8000/api/account/login" method="POST" >
+    <input type="text" id="email" name="email" placeholder="Email"><br><br>
+    <input type="password" id="password" name="password" placeholder="Password"><br><br>
     <input type="submit" value="Submit">
 </form> 
+{/if}
