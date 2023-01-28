@@ -20,7 +20,7 @@ use super::error;
 #[post("/account/new", format = "application/json", data = "<_acc>")]
 pub async fn account_new(_acc: Json<Account>, pool: &State<Pool>) -> Value {
     let account = Account::new(_acc.username(), _acc.password(), _acc.email());
-    let acc_cfg = AccountConfig::new("accounts", pool.inner());
+    let acc_cfg = AccountConfig::new(pool.inner());
     match acc_cfg.create(account).await {
         Ok(_) => {
             return json!({"status" : "SUCCESS"})
@@ -33,20 +33,22 @@ pub async fn account_new(_acc: Json<Account>, pool: &State<Pool>) -> Value {
 
 #[post("/account/login", data = "<login>")]
 pub async fn account_login(jar: &CookieJar<'_>, login: Form<AccountLogin>, pool: &State<Pool>) -> Result<Redirect, Status> {
-    let cfg = AccountConfig::new("accounts", pool.inner());
+    let cfg = AccountConfig::new(pool.inner());
     let email = &login.email;
     let password = &login.password;
     let is_auth = cfg.auth(LoginMethod::Email, &email, password).await;
     match is_auth {
-        Ok(sess) => {
-            return Ok(Redirect::to("http://127.0.0.1:5173"));
+        Ok(res) => {
+            res.save(cfg).await; //save session to db
+            return Ok(
+                Redirect::to("http://127.0.0.1:5173")
+            );
         },
-        Err(ae) => {
-            return Err(Status::Unauthorized);
+        Err(_) => {
+            return Err(Status::NotFound);
         },
     }
 }
-
 
 pub fn routes() -> Vec<Route> {
     routes![account_login]

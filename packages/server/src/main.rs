@@ -51,7 +51,7 @@ async fn main() -> Result<(), rocket::Error> {
 
     let pool = pg_cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
 
-    let acc_cfg = AccountConfig::new("accounts", &pool);
+    let acc_cfg = AccountConfig::new(&pool);
     let acc = Account::new("boss", "bossfuckyou", "boss@gmail.com"); 
     
     //acc_cfg.create(acc).await.unwrap();

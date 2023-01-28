@@ -71,3 +71,18 @@ BEGIN
 	RETURN QUERY SELECT * FROM accounts WHERE accounts.email = target_email;
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION create_session(sess_id varchar, acc_id varchar, created_at varchar)
+RETURNS BOOLEAN
+AS $$
+BEGIN
+	DELETE FROM sessions WHERE EXISTS (SELECT 1 FROM sessions WHERE sessions.account_id = acc_id); 
+	INSERT INTO sessions (session_id, account_id, created_at) VALUES(sess_id, acc_id, created_at);
+	RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+
+ALTER TABLE sessions ADD CONSTRAINT prev_dupes UNIQUE(session_id, account_id, created_at)
+

@@ -19,19 +19,11 @@ use crate::session::config::Session;
 
 use super::{enums::{Rank, LoginMethod}, error::AccountError, routes};
 
-macro_rules! add_commit_prereq {
-    ($conn:item) => {
-        
-    };
-} 
-
 /// Simple struct that helps select,insert,update and delete rows
 /// from the postgres database (for the account table :0).
 pub struct AccountConfig<'a> {
-    // The name of the db table.
-    table_name: String,
     // The deadpool_pg pool instance (wrapped in an arc.).
-    pg_pool: &'a Pool
+    pub pg_pool: &'a Pool
 }
 
 impl<'a> AccountConfig<'a> {
@@ -49,32 +41,11 @@ impl<'a> AccountConfig<'a> {
     /// let acc_config = AccountConfig::new("table_name", dpg_pool);
     /// ```
     #[inline(always)]
-    pub fn new(table_name: &str, pg_pool: &'a Pool) -> Self {
+    pub fn new(pg_pool: &'a Pool) -> Self {
         let acc_config = AccountConfig {
-            table_name: table_name.to_string(),
             pg_pool: &pg_pool
         };
         acc_config
-    }
-
-    /// Executes all the prerequisite queries.
-    ///
-    /// # Example
-    ///
-    /// Executes a variety of set queries.
-    ///
-    /// ```rust
-    /// use account::config::AccountConfig;
-    ///
-    /// let acc_config = AccountConfig::new("table_name", dpg_pool);
-    /// acc_config.()
-    /// acc_config.open_sesame();
-    /// ```
-    async fn open_sesame(&self) {
-        let pg = &self.pg_pool.get().await.unwrap();
-        pg.simple_query("query").await.unwrap();
-        //add_commit_prereq!(pg)
-        //load files find a way to do it i found
     }
 
     /// Creates a row inside the your table_name in Postgres
@@ -275,7 +246,7 @@ impl<'a> AccountConfig<'a> {
     ///
     /// &self.quik_query("SELECT * from table_name");
     /// ```
-    async fn quik_query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, tokio_postgres::Error>
+    pub async fn quik_query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, tokio_postgres::Error>
     {
         let pg = &self.pg_pool.get().await.unwrap();
         let stmt = pg.prepare(&sql).await.unwrap();
