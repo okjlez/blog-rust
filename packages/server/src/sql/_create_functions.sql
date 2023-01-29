@@ -72,6 +72,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION find_by_session(target_sess_id VARCHAR) 
+	RETURNS setof accounts
+AS $$
+DECLARE acc_id varchar := '';
+BEGIN 
+	SELECT account_id INTO acc_id FROM sessions WHERE sessions.session_id = target_sess_id;
+	IF FOUND THEN 
+			RETURN QUERY SELECT * from accounts WHERE id = acc_id;
+		ELSE
+			RAISE EXCEPTION 'No session found with id %', target_sess_id USING ERRCODE = '42P15';
+	END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION create_session(sess_id varchar, acc_id varchar, created_at varchar)
 RETURNS BOOLEAN
