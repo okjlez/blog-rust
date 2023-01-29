@@ -86,7 +86,7 @@ $$ LANGUAGE plpgsql;
 
 ALTER TABLE sessions ADD CONSTRAINT prev_dupes UNIQUE(session_id, account_id, created_at)
 
-CREATE FUNCTION create_session(title varchar, body varchar, creator varchar, creation varchar)
+CREATE FUNCTION create_thread(title varchar, body varchar, creator varchar, creation varchar)
 RETURNS BOOLEAN
 AS $$
 BEGIN
