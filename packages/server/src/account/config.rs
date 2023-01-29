@@ -1,3 +1,5 @@
+
+#![feature(allocator_api)]
 use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH}, borrow::Cow, result};
 use std::fs::File;
 use std::path::Path;
@@ -12,7 +14,7 @@ use pbkdf2::{
 };
 use postgres_types::{ToSql, FromSql};
 use rocket::{serde::{Serialize, Deserialize, self}, route, http::Cookie, FromForm, request::{FromRequest, self}, Request};
-use tokio_postgres::{Row, Column};
+use tokio_postgres::{Row, Column, SimpleQueryMessage};
 
 
 use crate::session::config::Session;
@@ -116,12 +118,6 @@ impl<'a> AccountConfig<'a> {
             Err(_) => todo!(), // never gets called ? even when length is 0 hmm
         }
     }
-
-    
-    fn update<'c, V>(&self, session_id: &str, update_field: &str, value: V) where V: Into<Cow<'c, str>> + Sync + ToSql {
-        //session_manager::get_session("SESSION_ID THAT DIRECTLY LINNKED TO ACCOUNT") // DO QUERIES DA DA DA GET DATA AND STUFF YES. :)
-    }
-    
 
     /// Finds an Account by their `field` inside the database and returns
     /// [`Account`].
@@ -253,6 +249,13 @@ impl<'a> AccountConfig<'a> {
         let pg = &self.pg_pool.get().await.unwrap();
         let stmt = pg.prepare(&sql).await.unwrap();
         pg.query(&stmt, params).await
+    }
+
+    pub async fn quik_simple_query(&self, sql: &str) ->
+    Result<Vec<Row>, tokio_postgres::Error>
+    {
+        let pg = &self.pg_pool.get().await.unwrap();
+        pg.query(sql, &[]).await
     }
 }
 

@@ -11,14 +11,11 @@
 /// REST API REQUESTS
 /// * ACCOUNTS * 
 /// /api/account/new POST
-/// /api/account/update POST   
 
 /// * THREADS * 
 /// /api/thread/new POST 
-/// /api/thread/remove POST
-/// /api/thread/update POST
 /// /api/thread/retrieve POST 
-/// /api/thread/{name}
+/// /api/thread/{id}
 
 
 use account::{config::AccountConfig};

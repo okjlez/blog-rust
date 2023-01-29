@@ -55,15 +55,15 @@ impl Thread {
     }
 
     pub fn body(&self) -> &String {
-        &self.title
+        &self.body
     }
 
     pub fn created_on(&self) -> &String {
-        &self.title
+        &self.created_on
     }
 
     pub fn created_by(&self) -> &String {
-        &self.title
+        &self.created_by
     }
 }
 
@@ -71,8 +71,8 @@ impl Thread {
 impl Default for Thread {
     fn default() -> Self {
         Self { 
-            title: Default::default(), 
-            body: Default::default(), 
+            title: String::default(), 
+            body: String::default(), 
             created_by: "".to_string(), 
             created_on: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis().to_string()
         }
