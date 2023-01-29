@@ -2,7 +2,7 @@ use std::time::SystemTime;
 
 use deadpool_postgres::Pool;
 use postgres_types::{FromSql, ToSql};
-use rocket::{serde::{Serialize, Deserialize}, tokio::time};
+use rocket::{serde::{Serialize, Deserialize}, tokio::time, FromForm};
 use std::time::UNIX_EPOCH;
 
 use crate::account::config::AccountConfig;
@@ -13,31 +13,27 @@ pub struct ThreadManager {
 }
 
 impl ThreadManager {
-    pub async fn save(&self, cfg: AccountConfig<'_>) {
-        let sql = "select create_session($1, $2, $3, $4)";
-
+    pub async fn save(&self, cfg: AccountConfig<'_>)  {
+        let sql = "select create_thread($1, $2, $3, $4)";
         let query = cfg.quik_query(sql, &[&self.thread.title, &self.thread.body, &self.thread.created_by, &self.thread.created_on]).await;
         match query {
             Ok(_) => {
-                println!("[Thread] {} created a post with id {} ", &self.thread.created_by, &self.thread.id);
+                println!("[Thread] {} created a post with name {} ", &self.thread.created_by, &self.thread.title());
             },
             Err(er) => {
                 println!("[Thread] {} failed to create a post err: {:#?} ", &self.thread.created_by, er.as_db_error());
             },
         }
     }
-    pub fn update(){}
 }
 
-#[derive(Debug, ToSql, FromSql, Serialize, Deserialize)]
-#[serde(crate = "rocket::serde")]
+#[derive(Debug, FromForm, ToSql, FromSql)]
 pub struct Thread {
-    pub id: i32,
     title: String,
     body: String,
-    #[serde(skip)]
+    #[field(default = "")] 
     created_by: String,
-    #[serde(default)] 
+    #[field(default = "")]
     created_on: String,
 }
 
@@ -75,10 +71,9 @@ impl Thread {
 impl Default for Thread {
     fn default() -> Self {
         Self { 
-            id: 0, 
             title: Default::default(), 
             body: Default::default(), 
-            created_by: Default::default(), 
+            created_by: "".to_string(), 
             created_on: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis().to_string()
         }
     }

@@ -31,7 +31,6 @@ mod account;
 mod session;
 mod thread;
 
-
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> { 
 
@@ -51,7 +50,8 @@ async fn main() -> Result<(), rocket::Error> {
     let acc_cfg = AccountConfig::new(&pool);
 
     let _rocket = rocket::build()
-    .mount("/api", account::routes::routes()).manage(pool)
+    .mount("/api", account::routes::routes())
+    .mount("/api", thread::routes::routes()).manage(pool)
         .ignite().await?
         .launch().await?;
     Ok(())

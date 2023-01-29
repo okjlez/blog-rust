@@ -13,8 +13,8 @@
 {#if show == true}
 <h2>You're logged in welcome!</h2>
 <ul style="width:120px;">
-    <a href="http://127.0.0.1:8000/api/account/logout">create thread</a>
-    <a href="http://127.0.0.1:8000/api/account/logout">logout</a>
+    <a href="http://127.0.0.1:5173/create_thread">create thread</a>
+    <a href="http://127.0.0.1:8000/api/account/logout">logout</a> 
 </ul>
 {/if}
 

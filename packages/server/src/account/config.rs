@@ -117,11 +117,11 @@ impl<'a> AccountConfig<'a> {
         }
     }
 
-    /* 
+    
     fn update<'c, V>(&self, session_id: &str, update_field: &str, value: V) where V: Into<Cow<'c, str>> + Sync + ToSql {
         //session_manager::get_session("SESSION_ID THAT DIRECTLY LINNKED TO ACCOUNT") // DO QUERIES DA DA DA GET DATA AND STUFF YES. :)
     }
-    */
+    
 
     /// Finds an Account by their `field` inside the database and returns
     /// [`Account`].
@@ -265,7 +265,7 @@ impl<'a> AccountConfig<'a> {
 /// how to create a table.
 /// 
 /// All the 'meaty' logic should be handled in AccountConfig not here.
-#[derive(Debug, ToSql, FromSql, Serialize, Deserialize)]
+#[derive(Debug, Clone, ToSql, FromSql, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct Account {
     #[serde(default)]
