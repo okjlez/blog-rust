@@ -19,7 +19,7 @@ use super::enums::LoginMethod;
 use super::error;
 
 
-#[post("/account/new", format = "application/json", data = "<_acc>")]
+#[post("/account/new", data = "<_acc>")]
 pub async fn account_new(_acc: Json<Account>, pool: &State<Pool>) -> Value {
     let account = Account::new(_acc.username(), _acc.password(), _acc.email());
     let acc_cfg = AccountConfig::new(pool.inner());
