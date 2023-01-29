@@ -1,8 +1,3 @@
 # blog-rust
-A simple blog system written in rust.
 
-
-This is my first project in Rust. 
-I learned a lot. A lot.
-
-
+My first blog system in rust it doesn't include create_account nor view threads just because I wanted to get over with this.
