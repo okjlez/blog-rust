@@ -2,7 +2,7 @@
 
 My first blog system in rust it doesn't include create_account nor view threads just because I was getting sick of working on this project.
 
-Not the best code, very rough. Heavyily relies on Postgres.
+Not the best code, very rough. Heavily relies on Postgres.
 
 Point of this project was for me to get use to the rust and postgres ecosystem; and a variety of useful libraries.
 
