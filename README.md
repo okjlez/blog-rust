@@ -1,6 +1,6 @@
 # blog-rust
 
-My first blog system in rust it doesn't include create_account nor view threads just because I was getting sick of working on this project.
+My first blog system in rust it doesn't include create_account nor_view threads just because I was getting sick of working on this project.
 
 Not the best code, very rough. Heavily relies on Postgres.
 
